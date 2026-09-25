@@ -256,4 +256,34 @@ defmodule Whelx.ControlTest do
       assert Templates.list_all() == []
     end
   end
+
+  describe "default business number for send_as_contact" do
+    test "prefers a number in a subscribed WABA over the bootstrap default" do
+      :ok = Accounts.bootstrap!()
+      {:ok, _} = Control.seed(@seed)
+      {:ok, msg} = Control.send_as_contact("5511955554444", %{"type" => "text", "text" => "oi"})
+
+      assert Whelx.Messaging.get_message_by_wamid(msg.wamid).conversation.phone_number_id ==
+               "333333333333333"
+    end
+
+    test "keeps talking to the number of the contact's last conversation" do
+      :ok = Accounts.bootstrap!()
+      {:ok, _} = Control.seed(@seed)
+      [bootstrap_phone | _] = Accounts.list_all_phone_numbers()
+
+      {:ok, _} =
+        Control.send_as_contact("5511955554444", %{
+          "type" => "text",
+          "text" => "oi",
+          "phone_number_id" => bootstrap_phone.id
+        })
+
+      {:ok, msg} =
+        Control.send_as_contact("5511955554444", %{"type" => "text", "text" => "de novo"})
+
+      assert Whelx.Messaging.get_message_by_wamid(msg.wamid).conversation.phone_number_id ==
+               bootstrap_phone.id
+    end
+  end
 end

@@ -154,11 +154,33 @@ defmodule Whelx.Control do
     :ok
   end
 
-  def default_phone_id do
-    case Accounts.list_all_phone_numbers() do
-      [phone | _] -> {:ok, phone.id}
-      [] -> {:error, "no phone number configured"}
+  @doc """
+  Business number a contact talks to when none is given: the number of the
+  contact's latest conversation, else the first number of a subscribed WABA
+  (webhooks only flow there), else the first number.
+  """
+  def default_phone_id(wa_id \\ nil) do
+    phones = Accounts.list_all_phone_numbers()
+    subscribed = MapSet.new(for w <- Accounts.list_wabas(), w.subscribed, do: w.id)
+
+    cond do
+      phones == [] -> {:error, "no phone number configured"}
+      id = last_conversation_phone(wa_id) -> {:ok, id}
+      phone = Enum.find(phones, &MapSet.member?(subscribed, &1.waba_id)) -> {:ok, phone.id}
+      true -> {:ok, hd(phones).id}
     end
+  end
+
+  defp last_conversation_phone(nil), do: nil
+
+  defp last_conversation_phone(wa_id) do
+    Repo.one(
+      from c in Conversation,
+        where: c.contact_wa_id == ^Attrs.digits(wa_id),
+        order_by: [desc_nulls_last: c.last_message_at, desc: c.id],
+        limit: 1,
+        select: c.phone_number_id
+    )
   end
 
   @doc "A contact sends a message to a business number."
@@ -166,7 +188,7 @@ defmodule Whelx.Control do
     attrs = Attrs.stringify(attrs)
 
     with :ok <- valid_wa_id(wa_id),
-         {:ok, phone_id} <- phone_id(attrs) do
+         {:ok, phone_id} <- phone_id(attrs, wa_id) do
       context = attrs["context_wamid"]
 
       case attrs["type"] do
@@ -200,13 +222,13 @@ defmodule Whelx.Control do
       else: {:error, "wa_id is invalid: #{inspect(wa_id)} (8 to 15 digits)"}
   end
 
-  defp phone_id(%{"phone_number_id" => id}) when is_binary(id) and id != "" do
+  defp phone_id(%{"phone_number_id" => id}, _wa_id) when is_binary(id) and id != "" do
     if Accounts.get_phone_number(id),
       do: {:ok, id},
       else: {:error, "phone_number_id #{id} does not exist"}
   end
 
-  defp phone_id(_attrs), do: default_phone_id()
+  defp phone_id(_attrs, wa_id), do: default_phone_id(wa_id)
 
   defp inbound(phone_id, wa_id, type, content, context) do
     Messaging.receive_inbound(phone_id, wa_id, %{
