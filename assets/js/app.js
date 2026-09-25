@@ -81,3 +81,9 @@ if (process.env.NODE_ENV === "development") {
   })
 }
 
+
+// whelx: copy helper used by <.copy_button> and the Pix card.
+window.addEventListener("whelx:copy", (event) => {
+  const text = event.detail?.text ?? event.target?.innerText ?? ""
+  navigator.clipboard?.writeText(text)
+})

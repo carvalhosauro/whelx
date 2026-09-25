@@ -25,7 +25,7 @@ defmodule WhelxWeb.Router do
   scope "/", WhelxWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/config", ConfigLive, :index
   end
 
   scope "/_whelx", WhelxWeb.Control do

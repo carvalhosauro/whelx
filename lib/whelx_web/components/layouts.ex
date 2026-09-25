@@ -31,44 +31,66 @@ defmodule WhelxWeb.Layouts do
     default: nil,
     doc: "the current [scope](https://phoenix.hexdocs.pm/scopes.html)"
 
+  attr :active, :atom, default: nil, doc: "active navigation entry"
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://phoenix.hexdocs.pm/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </header>
-
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <div class="flex h-screen overflow-hidden bg-base-200 text-base-content">
+      <nav class="flex w-16 shrink-0 flex-col items-center gap-1 border-r border-base-300 bg-base-100 py-3 md:w-48 md:items-stretch md:px-2">
+        <.link navigate={~p"/"} class="mb-3 flex items-center gap-2 px-2">
+          <span class="grid size-8 place-items-center rounded-lg bg-emerald-600 font-black text-white">w</span>
+          <span class="hidden text-lg font-bold tracking-tight md:inline">whelx</span>
+        </.link>
+        <.nav_item navigate={~p"/"} icon="hero-chat-bubble-left-right" active={@active == :chat}>
+          Chat
+        </.nav_item>
+        <.nav_item navigate={~p"/contacts"} icon="hero-users" active={@active == :contacts}>
+          Contatos
+        </.nav_item>
+        <.nav_item navigate={~p"/templates"} icon="hero-document-text" active={@active == :templates}>
+          Templates
+        </.nav_item>
+        <.nav_item navigate={~p"/campaigns"} icon="hero-megaphone" active={@active == :campaigns}>
+          Campanhas
+        </.nav_item>
+        <.nav_item navigate={~p"/logs"} icon="hero-queue-list" active={@active == :logs}>
+          Logs
+        </.nav_item>
+        <.nav_item navigate={~p"/chaos"} icon="hero-bolt" active={@active == :chaos}>Caos</.nav_item>
+        <.nav_item navigate={~p"/config"} icon="hero-cog-6-tooth" active={@active == :config}>
+          Config
+        </.nav_item>
+        <div class="mt-auto flex justify-center pt-3"><.theme_toggle /></div>
+      </nav>
+      <main class="min-w-0 flex-1 overflow-y-auto">
         {render_slot(@inner_block)}
-      </div>
-    </main>
+      </main>
+    </div>
 
     <.flash_group flash={@flash} />
+    """
+  end
+
+  attr :navigate, :string, required: true
+  attr :icon, :string, required: true
+  attr :active, :boolean, default: false
+  slot :inner_block, required: true
+
+  defp nav_item(assigns) do
+    ~H"""
+    <.link
+      navigate={@navigate}
+      title={render_slot(@inner_block)}
+      class={[
+        "flex items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors",
+        @active && "bg-emerald-600/15 font-semibold text-emerald-700 dark:text-emerald-400",
+        !@active && "text-base-content/70 hover:bg-base-200 hover:text-base-content"
+      ]}
+    >
+      <.icon name={@icon} class="size-5 shrink-0" />
+      <span class="hidden md:inline">{render_slot(@inner_block)}</span>
+    </.link>
     """
   end
 
