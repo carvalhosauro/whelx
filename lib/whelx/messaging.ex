@@ -487,6 +487,27 @@ defmodule Whelx.Messaging do
     end
   end
 
+  @doc "Outbound template messages since `since`, grouped by template name."
+  def campaign_stats(%DateTime{} = since) do
+    from(m in Message,
+      where: m.direction == "outbound" and m.type == "template" and m.inserted_at >= ^since,
+      group_by: fragment("json_extract(?, '$.content.name')", m.payload),
+      order_by: [desc: count(m.id)],
+      select: %{
+        name: fragment("json_extract(?, '$.content.name')", m.payload),
+        total: count(m.id),
+        accepted: sum(fragment("CASE WHEN ? = 'accepted' THEN 1 ELSE 0 END", m.status)),
+        sent: sum(fragment("CASE WHEN ? = 'sent' THEN 1 ELSE 0 END", m.status)),
+        delivered: sum(fragment("CASE WHEN ? = 'delivered' THEN 1 ELSE 0 END", m.status)),
+        read: sum(fragment("CASE WHEN ? = 'read' THEN 1 ELSE 0 END", m.status)),
+        failed: sum(fragment("CASE WHEN ? = 'failed' THEN 1 ELSE 0 END", m.status)),
+        first_at: min(m.inserted_at),
+        last_at: max(m.inserted_at)
+      }
+    )
+    |> Repo.all()
+  end
+
   # Events
 
   @doc false

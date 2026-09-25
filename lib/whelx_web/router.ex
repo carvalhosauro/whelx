@@ -28,6 +28,9 @@ defmodule WhelxWeb.Router do
     live "/", ChatLive, :index
     live "/contacts", ContactsLive, :index
     live "/templates", TemplatesLive, :index
+    live "/campaigns", CampaignsLive, :index
+    live "/logs", LogsLive, :index
+    live "/chaos", ChaosLive, :index
     live "/config", ConfigLive, :index
     get "/ui/media/:id", UiMediaController, :show
   end

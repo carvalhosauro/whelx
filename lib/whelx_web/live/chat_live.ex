@@ -175,18 +175,18 @@ defmodule WhelxWeb.ChatLive do
         type = media_type(mime)
         conversation = acc.assigns.conversation
 
-        case Messaging.receive_inbound_media(
-               conversation.phone_number_id,
-               conversation.contact_wa_id,
-               type,
-               binary,
-               mime,
-               caption: caption,
-               file_name: name
-             ) do
-          {:ok, _} -> acc
-          {:error, reason} -> put_flash(acc, :error, error_text(reason))
-        end
+        {:ok, _} =
+          Messaging.receive_inbound_media(
+            conversation.phone_number_id,
+            conversation.contact_wa_id,
+            type,
+            binary,
+            mime,
+            caption: caption,
+            file_name: name
+          )
+
+        acc
       end)
 
     {:noreply, refresh_now(socket)}
