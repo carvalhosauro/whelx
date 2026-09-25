@@ -13,11 +13,29 @@ defmodule Whelx.Messaging.PairLimit do
   @spec check(String.t(), String.t(), pos_integer(), pos_integer(), integer()) ::
           :ok | {:error, :pair_limited}
   def check(phone_id, wa_id, burst, interval_ms, now_ms \\ System.monotonic_time(:millisecond)) do
+    ensure_started()
     GenServer.call(__MODULE__, {:check, {phone_id, wa_id}, burst, interval_ms, now_ms})
   end
 
   @spec reset() :: :ok
-  def reset, do: GenServer.call(__MODULE__, :reset)
+  def reset do
+    ensure_started()
+    GenServer.call(__MODULE__, :reset)
+  end
+
+  # Self-heal when code was hot-reloaded into a node started before this
+  # process existed in the supervision tree.
+  defp ensure_started do
+    if is_nil(Process.whereis(__MODULE__)) do
+      case Supervisor.start_child(Whelx.Supervisor, __MODULE__) do
+        {:ok, _} -> :ok
+        {:error, {:already_started, _}} -> :ok
+        {:error, :already_present} -> Supervisor.restart_child(Whelx.Supervisor, __MODULE__)
+      end
+    end
+
+    :ok
+  end
 
   @impl true
   def init(:ok) do
