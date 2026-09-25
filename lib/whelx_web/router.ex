@@ -57,6 +57,7 @@ defmodule WhelxWeb.Router do
     post "/webhooks/deliveries/:id/redeliver", WebhookController, :redeliver
     post "/webhooks/verify", WebhookController, :verify
     get "/requests", WebhookController, :requests
+    post "/wait", WaitController, :create
   end
 
   # Fake Graph API. Must stay last: `/:version/...` would shadow other routes.
