@@ -323,6 +323,11 @@ def main():
     status, contacts = client.control("GET", "/contacts")
     numbers = [c["wa_id"] for c in contacts if c["wa_id"] != CUSTOMER][:120]
 
+    # 50 msg/s during the burst: 120 sends span at most two 1 s windows, so at
+    # most 100 can pass and 130429 is guaranteed regardless of window alignment.
+    client.control("POST", "/seed", {"wabas": [{"id": WABA, "name": "Pizzaria Smoke", "phone_numbers": [
+        {"id": PHONE, "display_phone_number": "+55 11 4000-1234", "verified_name": "Pizzaria Smoke", "throughput_mps": 50}]}]})
+
     results = []
     lock = threading.Lock()
 
@@ -345,7 +350,9 @@ def main():
     check("template sends return message_status accepted", all(b["messages"][0].get("message_status") == "accepted" for b in ok), ok[:1])
     check("no unexpected send errors", other == [], other[:3])
     if elapsed < 1.0:
-        check("burst above 80 msg/s gets 130429", len(limited) > 0)
+        check("burst above the number's throughput gets 130429", len(limited) >= 20, len(limited))
+    client.control("POST", "/seed", {"wabas": [{"id": WABA, "name": "Pizzaria Smoke", "phone_numbers": [
+        {"id": PHONE, "display_phone_number": "+55 11 4000-1234", "verified_name": "Pizzaria Smoke", "throughput_mps": 80}]}]})
 
     accepted = [b["messages"][0]["id"] for b in ok]
     wait_for(lambda: all("delivered" in statuses_for(w) for w in accepted), timeout=30)
