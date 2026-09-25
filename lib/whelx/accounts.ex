@@ -16,9 +16,34 @@ defmodule Whelx.Accounts do
   end
 
   def upsert_app(attrs) do
-    (get_app() || %App{})
-    |> App.changeset(Attrs.stringify(attrs))
-    |> Repo.insert_or_update()
+    attrs = Attrs.stringify(attrs)
+
+    app = get_app()
+
+    case attrs["id"] do
+      new_id when is_binary(new_id) and new_id != "" and not is_nil(app) and new_id != app.id ->
+        change_app_id(app, attrs)
+
+      _ ->
+        (app || %App{}) |> App.changeset(attrs) |> Repo.insert_or_update() |> notify()
+    end
+  end
+
+  # The app id is a primary key referenced by wabas: insert the new row,
+  # move the wabas, then drop the old row.
+  defp change_app_id(%App{} = app, attrs) do
+    base = Map.take(Map.from_struct(app), [:name, :app_secret, :verify_token, :webhook_url])
+
+    Repo.transaction(fn ->
+      with {:ok, new_app} <-
+             %App{} |> App.changeset(Map.merge(Attrs.stringify(base), attrs)) |> Repo.insert() do
+        Repo.update_all(from(w in Waba, where: w.app_id == ^app.id), set: [app_id: new_app.id])
+        Repo.delete!(app)
+        new_app
+      else
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
     |> notify()
   end
 

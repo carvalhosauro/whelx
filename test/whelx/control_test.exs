@@ -62,6 +62,13 @@ defmodule Whelx.ControlTest do
     assert length(Accounts.list_wabas()) == 1
   end
 
+  test "seed/1 can change the app_id after bootstrap (wabas follow)" do
+    :ok = Accounts.bootstrap!()
+    {:ok, snap} = Control.seed(@seed)
+    assert snap["app"]["app_id"] == "111111111111111"
+    assert Enum.all?(Accounts.list_wabas(), &(&1.app_id == "111111111111111"))
+  end
+
   test "seed/1 rolls back on invalid data" do
     bad = put_in(@seed, ["tokens"], [%{"token" => "nope", "wabas" => "all"}])
     assert {:error, _} = Control.seed(bad)
