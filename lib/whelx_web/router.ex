@@ -14,14 +14,29 @@ defmodule WhelxWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :graph do
+    plug :put_format, "json"
+    plug WhelxWeb.Plugs.GraphRequestLogger
+    plug WhelxWeb.Plugs.GraphVersion
+    plug WhelxWeb.Plugs.GraphAuth
+  end
+
   scope "/", WhelxWeb do
     pipe_through :browser
 
     get "/", PageController, :home
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", WhelxWeb do
-  #   pipe_through :api
-  # end
+  # Fake Graph API. Must stay last: `/:version/...` would shadow other routes.
+  scope "/", WhelxWeb.Graph do
+    pipe_through :graph
+
+    get "/:version/:id", ObjectController, :show
+    post "/:version/:id", ObjectController, :create
+    get "/:version/:id/phone_numbers", WabaController, :phone_numbers
+    post "/:version/:id/subscribed_apps", WabaController, :subscribe
+    delete "/:version/:id/subscribed_apps", WabaController, :unsubscribe
+
+    match :*, "/:version/*rest", ObjectController, :unsupported
+  end
 end

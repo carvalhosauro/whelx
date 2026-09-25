@@ -35,4 +35,8 @@ defmodule WhelxWeb.ConnCase do
     Whelx.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
+
+  @doc "Adds a Graph API bearer token to the request."
+  def graph_auth(conn, token),
+    do: Plug.Conn.put_req_header(conn, "authorization", "Bearer " <> token)
 end

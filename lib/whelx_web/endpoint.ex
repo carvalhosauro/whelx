@@ -42,7 +42,9 @@ defmodule WhelxWeb.Endpoint do
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
-    json_decoder: Phoenix.json_library()
+    json_decoder: Phoenix.json_library(),
+    body_reader: {WhelxWeb.RawBodyReader, :read_body, []},
+    length: 20_000_000
 
   plug Plug.MethodOverride
   plug Plug.Head
