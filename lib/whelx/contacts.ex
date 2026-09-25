@@ -62,7 +62,7 @@ defmodule Whelx.Contacts do
     notify({:ok, count})
   end
 
-  def bulk_create(_count), do: {:error, "count deve estar entre 1 e 10000"}
+  def bulk_create(_count), do: {:error, "count must be between 1 and 10000"}
 
   defp notify({:ok, _} = result) do
     Events.broadcast("config", :contacts_changed)

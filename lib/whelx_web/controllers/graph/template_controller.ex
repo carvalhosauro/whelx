@@ -53,7 +53,7 @@ defmodule WhelxWeb.Graph.TemplateController do
   end
 
   defp required_name(%{"name" => name}) when is_binary(name) and name != "", do: {:ok, name}
-  defp required_name(_), do: {:error, Error.invalid_parameter("name é obrigatório")}
+  defp required_name(_), do: {:error, Error.invalid_parameter("name is required")}
 
   defp next_url(conn, after_cursor) do
     query = conn.query_params |> Map.put("after", after_cursor) |> URI.encode_query()

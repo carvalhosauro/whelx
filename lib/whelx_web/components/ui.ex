@@ -97,7 +97,7 @@ defmodule WhelxWeb.UI do
   defp btn_variant(_), do: "border border-base-300 bg-base-100 hover:bg-base-200"
 
   attr :text, :string, required: true
-  attr :label, :string, default: "Copiar"
+  attr :label, :string, default: "Copy"
 
   def copy_button(assigns) do
     ~H"""

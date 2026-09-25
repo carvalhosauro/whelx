@@ -159,13 +159,13 @@ defmodule Whelx.Accounts do
   def bootstrap! do
     if is_nil(get_app()) do
       {:ok, _app} = upsert_app(%{})
-      {:ok, waba} = upsert_waba(%{name: "Loja Demo"})
+      {:ok, waba} = upsert_waba(%{name: "Demo Store"})
 
       {:ok, _phone} =
         upsert_phone_number(%{
           waba_id: waba.id,
           display_phone_number: "+55 11 4000-0001",
-          verified_name: "Loja Demo"
+          verified_name: "Demo Store"
         })
 
       {:ok, _token} = create_token([waba.id])

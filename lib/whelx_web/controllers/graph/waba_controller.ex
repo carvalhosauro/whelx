@@ -82,7 +82,7 @@ defmodule WhelxWeb.Graph.WabaController do
       other ->
         detail =
           case other do
-            {:ok, %{status: status}} -> "HTTP #{status} ou hub.challenge não ecoado"
+            {:ok, %{status: status}} -> "HTTP #{status} or hub.challenge not echoed"
             {:error, reason} -> reason
           end
 

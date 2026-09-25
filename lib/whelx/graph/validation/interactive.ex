@@ -7,12 +7,12 @@ defmodule Whelx.Graph.Validation.Interactive do
   @key_types ~w(CPF CNPJ EMAIL PHONE EVP)
 
   def validate(%{"action" => action}) when not is_map(action),
-    do: fail("interactive.action deve ser um objeto")
+    do: fail("interactive.action must be an object")
 
   def validate(%{"body" => body}) when not is_map(body),
-    do: fail("interactive.body deve ser um objeto")
+    do: fail("interactive.body must be an object")
 
-  def validate(i) when not is_map(i), do: fail("interactive deve ser um objeto")
+  def validate(i) when not is_map(i), do: fail("interactive must be an object")
 
   def validate(%{"type" => "button"} = i) do
     with :ok <- body(i), do: buttons(get_in(i, ["action", "buttons"]))
@@ -45,7 +45,7 @@ defmodule Whelx.Graph.Validation.Interactive do
   def validate(%{"type" => type}) when is_binary(type),
     do: {:error, Error.unsupported("interactive.type=#{type}")}
 
-  def validate(_), do: fail("interactive.type é obrigatório")
+  def validate(_), do: fail("interactive.type is required")
 
   defp body(i) do
     with {:ok, text} <- string(i["body"] || %{}, "text"), do: max_len(text, 1024, "body.text")
@@ -57,11 +57,11 @@ defmodule Whelx.Graph.Validation.Interactive do
     with :ok <- each(list, &button/1) do
       if length(Enum.uniq(ids)) == length(list),
         do: :ok,
-        else: fail("action.buttons: ids duplicados")
+        else: fail("action.buttons: duplicate ids")
     end
   end
 
-  defp buttons(_), do: fail("action.buttons deve ter de 1 a 3 botões")
+  defp buttons(_), do: fail("action.buttons must have 1 to 3 buttons")
 
   defp button(%{"type" => "reply", "reply" => reply}) do
     with {:ok, id} <- string(reply, "id"),
@@ -70,25 +70,25 @@ defmodule Whelx.Graph.Validation.Interactive do
          do: max_len(title, 20, "reply.title")
   end
 
-  defp button(_), do: fail("botão deve ser {type: reply, reply: {id, title}}")
+  defp button(_), do: fail("button must be {type: reply, reply: {id, title}}")
 
   defp sections(list) when is_list(list) and length(list) in 1..10 do
     if Enum.all?(list, &(is_map(&1) and is_list(&1["rows"] || []))),
       do: valid_sections(list),
-      else: fail("action.sections: cada seção precisa de rows (lista)")
+      else: fail("action.sections: every section needs rows (a list)")
   end
 
-  defp sections(_), do: fail("action.sections deve ter de 1 a 10 seções")
+  defp sections(_), do: fail("action.sections must have 1 to 10 sections")
 
   defp valid_sections(list) do
     rows = Enum.flat_map(list, &(&1["rows"] || []))
 
     cond do
       length(rows) not in 1..10 ->
-        fail("list: total de linhas deve ser de 1 a 10")
+        fail("list: total rows must be 1 to 10")
 
       length(list) > 1 and Enum.any?(list, &(not is_binary(&1["title"]))) ->
-        fail("list: seções precisam de title quando há mais de uma")
+        fail("list: sections need a title when there is more than one")
 
       true ->
         with :ok <- each(list, &section_title/1),
@@ -110,14 +110,14 @@ defmodule Whelx.Graph.Validation.Interactive do
       case row["description"] do
         nil -> :ok
         description when is_binary(description) -> max_len(description, 72, "row.description")
-        _ -> fail("row.description deve ser texto")
+        _ -> fail("row.description must be a string")
       end
     end
   end
 
   defp unique_rows(rows) do
     ids = Enum.map(rows, & &1["id"])
-    if length(Enum.uniq(ids)) == length(ids), do: :ok, else: fail("list: ids de linha duplicados")
+    if length(Enum.uniq(ids)) == length(ids), do: :ok, else: fail("list: duplicate row ids")
   end
 
   defp order_parameters(params) when is_map(params) do
@@ -131,12 +131,12 @@ defmodule Whelx.Graph.Validation.Interactive do
          do: payment_settings(params["payment_settings"])
   end
 
-  defp order_parameters(_), do: fail("action.parameters é obrigatório")
+  defp order_parameters(_), do: fail("action.parameters is required")
 
   defp reference_id(reference) do
     if Regex.match?(~r/^[A-Za-z0-9_.\-]{1,60}$/, reference),
       do: :ok,
-      else: fail("reference_id aceita apenas letras, números, _ - . e até 60 caracteres")
+      else: fail("reference_id accepts only letters, digits, _ - . and up to 60 characters")
   end
 
   # `order` is optional in Meta's API; when present it must add up.
@@ -152,18 +152,18 @@ defmodule Whelx.Graph.Validation.Interactive do
          :ok <-
            check(
              items_sum == subtotal,
-             "order.subtotal (#{subtotal}) difere da soma dos itens (#{items_sum})"
+             "order.subtotal (#{subtotal}) does not match the sum of the items (#{items_sum})"
            ) do
       expected = subtotal + tax + shipping - discount
 
       check(
         total == expected,
-        "total_amount (#{total}) difere de subtotal + tax + shipping - discount (#{expected})"
+        "total_amount (#{total}) does not match subtotal + tax + shipping - discount (#{expected})"
       )
     end
   end
 
-  defp order(_order, _total), do: fail("order deve ser um objeto")
+  defp order(_order, _total), do: fail("order must be an object")
 
   defp items(list) when is_list(list) and list != [] do
     Enum.reduce_while(list, {:ok, 0}, fn item, {:ok, acc} ->
@@ -181,15 +181,15 @@ defmodule Whelx.Graph.Validation.Interactive do
     end)
   end
 
-  defp items(_), do: fail("order.items deve ser uma lista não vazia")
+  defp items(_), do: fail("order.items must be a non-empty list")
 
   defp quantity(q) when is_integer(q) and q > 0, do: :ok
-  defp quantity(_), do: fail("item.quantity deve ser inteiro positivo")
+  defp quantity(_), do: fail("item.quantity must be a positive integer")
 
   defp money(%{"value" => value, "offset" => 100}, _field) when is_integer(value) and value >= 0,
     do: {:ok, value}
 
-  defp money(_, field), do: fail("#{field} deve ser {value: inteiro em centavos, offset: 100}")
+  defp money(_, field), do: fail("#{field} must be {value: integer in cents, offset: 100}")
 
   defp optional_money(nil, _field), do: {:ok, 0}
   defp optional_money(value, field), do: money(value, field)
@@ -197,7 +197,7 @@ defmodule Whelx.Graph.Validation.Interactive do
   defp payment_settings(list) when is_list(list) and list != [],
     do: each(list, &payment_setting/1)
 
-  defp payment_settings(_), do: fail("payment_settings deve ser uma lista não vazia")
+  defp payment_settings(_), do: fail("payment_settings must be a non-empty list")
 
   defp payment_setting(%{"type" => "pix_dynamic_code", "pix_dynamic_code" => pix})
        when is_map(pix) do
@@ -212,7 +212,7 @@ defmodule Whelx.Graph.Validation.Interactive do
   end
 
   defp payment_setting(%{"type" => type}) when type in ~w(pix_dynamic_code payment_link),
-    do: fail("payment_settings: objeto #{type} ausente")
+    do: fail("payment_settings: #{type} object is missing")
 
   defp payment_setting(setting),
     do: {:error, Error.unsupported("payment_settings.type=#{inspect(setting["type"])}")}
@@ -220,13 +220,12 @@ defmodule Whelx.Graph.Validation.Interactive do
   defp equal(value, value, _field), do: :ok
 
   defp equal(value, expected, field),
-    do: fail("#{field} deve ser #{inspect(expected)} (recebido #{inspect(value)})")
+    do: fail("#{field} must be #{inspect(expected)} (got #{inspect(value)})")
 
   defp inclusion(value, allowed, field) do
     if value in allowed,
       do: :ok,
-      else:
-        fail("#{field} deve ser um de #{Enum.join(allowed, ", ")} (recebido #{inspect(value)})")
+      else: fail("#{field} must be one of #{Enum.join(allowed, ", ")} (got #{inspect(value)})")
   end
 
   defp check(true, _message), do: :ok

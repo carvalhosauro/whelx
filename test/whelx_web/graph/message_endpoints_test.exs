@@ -179,7 +179,7 @@ defmodule WhelxWeb.Graph.MessageEndpointsTest do
       "image" => %{"link" => "https://x/y.png"}
     }
 
-    assert %{"error" => %{"code" => 100, "error_user_msg" => "whelx: não suportado" <> _}} =
+    assert %{"error" => %{"code" => 100, "error_user_msg" => "whelx: not supported" <> _}} =
              json_response(send_msg(conn, token, phone, body), 400)
   end
 

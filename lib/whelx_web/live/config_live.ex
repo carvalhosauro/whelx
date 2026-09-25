@@ -40,7 +40,7 @@ defmodule WhelxWeb.ConfigLive do
   def handle_event("save_app", %{"app" => params}, socket) do
     case Accounts.upsert_app(params) do
       {:ok, _} ->
-        {:noreply, socket |> assign(app_errors: %{}) |> put_flash(:info, "App salvo") |> load()}
+        {:noreply, socket |> assign(app_errors: %{}) |> put_flash(:info, "App saved") |> load()}
 
       {:error, cs} ->
         {:noreply, assign(socket, app_errors: Control.changeset_errors(cs))}
@@ -55,7 +55,7 @@ defmodule WhelxWeb.ConfigLive do
 
     {:noreply,
      socket
-     |> put_flash(:info, "App secret regenerado — atualize o app secret na sua aplicação")
+     |> put_flash(:info, "App secret regenerated — update the app secret in your application")
      |> load()}
   end
 
@@ -63,13 +63,13 @@ defmodule WhelxWeb.ConfigLive do
     result =
       case Webhooks.verify() do
         {:ok, %{ok: true}} ->
-          {:ok, "Webhook verificado: hub.challenge ecoado corretamente"}
+          {:ok, "Webhook verified: hub.challenge echoed correctly"}
 
         {:ok, %{status: status, body: body}} ->
-          {:error, "Falhou: HTTP #{status} — #{String.slice(body, 0, 200)}"}
+          {:error, "Failed: HTTP #{status} — #{String.slice(body, 0, 200)}"}
 
         {:error, reason} ->
-          {:error, "Falhou: #{reason}"}
+          {:error, "Failed: #{reason}"}
       end
 
     {:noreply, assign(socket, verify_result: result)}
@@ -77,7 +77,7 @@ defmodule WhelxWeb.ConfigLive do
 
   def handle_event("save_settings", %{"settings" => params}, socket) do
     case Accounts.update_settings(params) do
-      {:ok, _} -> {:noreply, socket |> put_flash(:info, "Configurações salvas") |> load()}
+      {:ok, _} -> {:noreply, socket |> put_flash(:info, "Settings saved") |> load()}
       {:error, cs} -> {:noreply, put_flash(socket, :error, inspect(Control.changeset_errors(cs)))}
     end
   end
@@ -131,11 +131,11 @@ defmodule WhelxWeb.ConfigLive do
     ~H"""
     <Layouts.app flash={@flash} active={:config}>
       <.page
-        title="Configuração"
-        subtitle="Segredos, números e integração com a sua aplicação. Tudo local."
+        title="Configuration"
+        subtitle="Secrets, phone numbers and the integration with your application. All local."
       >
         <div class="grid gap-4 lg:grid-cols-2">
-          <.panel title="App Meta (fake)">
+          <.panel title="Meta app (emulated)">
             <dl class="mb-4 grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 text-sm">
               <dt class="text-base-content/60">App ID</dt>
               <dd class="flex items-center gap-2 font-mono">
@@ -145,22 +145,22 @@ defmodule WhelxWeb.ConfigLive do
               <dd class="flex flex-wrap items-center gap-2 font-mono">
                 <span>{if @reveal_secret, do: @app.app_secret, else: String.duplicate("•", 16)}</span>
                 <.btn variant="ghost" phx-click="toggle_secret">
-                  {if @reveal_secret, do: "Ocultar", else: "Mostrar"}
+                  {if @reveal_secret, do: "Hide", else: "Show"}
                 </.btn>
                 <.copy_button text={@app.app_secret} />
                 <.btn
                   variant="ghost"
                   phx-click="regenerate_secret"
-                  data-confirm="Regenerar o app secret? Sua aplicação precisará do novo valor."
+                  data-confirm="Regenerate the app secret? Your application will need the new value."
                 >
-                  Regenerar
+                  Regenerate
                 </.btn>
               </dd>
             </dl>
 
             <.form for={@app_form} id="app-form" phx-submit="save_app" class="space-y-3">
               <label class="block text-sm">
-                <span class="mb-1 block text-base-content/70">Webhook URL (sua aplicação)</span>
+                <span class="mb-1 block text-base-content/70">Webhook URL (your application)</span>
                 <input
                   name="app[webhook_url]"
                   value={@app_form[:webhook_url].value}
@@ -181,8 +181,8 @@ defmodule WhelxWeb.ConfigLive do
                 />
               </label>
               <div class="flex flex-wrap items-center gap-2">
-                <.btn type="submit" variant="primary">Salvar</.btn>
-                <.btn phx-click="verify">Verificar webhook</.btn>
+                <.btn type="submit" variant="primary">Save</.btn>
+                <.btn phx-click="verify">Verify webhook</.btn>
               </div>
             </.form>
             <p
@@ -198,19 +198,19 @@ defmodule WhelxWeb.ConfigLive do
             </p>
           </.panel>
 
-          <.panel title=".env da sua aplicação">
-            <:actions><.copy_button text={@env_block} label="Copiar tudo" /></:actions>
+          <.panel title="Your application's .env">
+            <:actions><.copy_button text={@env_block} label="Copy all" /></:actions>
             <pre
               id="env-block"
               class="overflow-x-auto rounded-lg bg-base-200 p-3 font-mono text-xs leading-relaxed"
             >{@env_block}</pre>
             <p class="mt-2 text-xs text-base-content/60">
-              Os nomes das variáveis são sugestões: use os nomes que a sua aplicação já lê.
-              O essencial é trocar a base URL da Graph API para o whelx.
+              The variable names are suggestions: use the names your application already reads.
+              What matters is pointing the Graph API base URL at whelx.
             </p>
           </.panel>
 
-          <.panel title="Comportamento">
+          <.panel title="Behavior">
             <.form
               for={@settings_form}
               id="settings-form"
@@ -218,29 +218,29 @@ defmodule WhelxWeb.ConfigLive do
               class="grid grid-cols-2 gap-3 text-sm"
             >
               <label>
-                <span class="mb-1 block text-base-content/70">Retry de webhook</span>
+                <span class="mb-1 block text-base-content/70">Webhook retries</span>
                 <select name="settings[webhook_retry_profile]" class={input_class()}>
                   {Phoenix.HTML.Form.options_for_select(
-                    [{"Rápido (dev)", "fast"}, {"Realista (Meta)", "realistic"}],
+                    [{"Fast (dev)", "fast"}, {"Realistic (Meta)", "realistic"}],
                     @settings_form[:webhook_retry_profile].value
                   )}
                 </select>
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Aprovação de template</span>
+                <span class="mb-1 block text-base-content/70">Template approval</span>
                 <select name="settings[template_approval_policy]" class={input_class()}>
                   {Phoenix.HTML.Form.options_for_select(
                     [
                       {"Manual", "manual"},
-                      {"Aprovar automático", "auto_approve"},
-                      {"Rejeitar automático", "auto_reject"}
+                      {"Auto-approve", "auto_approve"},
+                      {"Auto-reject", "auto_reject"}
                     ],
                     @settings_form[:template_approval_policy].value
                   )}
                 </select>
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Revisão após (ms)</span>
+                <span class="mb-1 block text-base-content/70">Review after (ms)</span>
                 <input
                   type="number"
                   name="settings[template_review_after_ms]"
@@ -249,7 +249,7 @@ defmodule WhelxWeb.ConfigLive do
                 />
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Motivo de rejeição</span>
+                <span class="mb-1 block text-base-content/70">Rejection reason</span>
                 <input
                   name="settings[template_reject_reason]"
                   value={@settings_form[:template_reject_reason].value}
@@ -278,13 +278,13 @@ defmodule WhelxWeb.ConfigLive do
                 <span class="mb-1 block text-base-content/70">Pair rate limit (131056)</span>
                 <select name="settings[pair_rate_limit_enabled]" class={input_class()}>
                   {Phoenix.HTML.Form.options_for_select(
-                    [{"Desligado", "false"}, {"Ligado", "true"}],
+                    [{"Off", "false"}, {"On", "true"}],
                     to_string(@settings_form[:pair_rate_limit_enabled].value)
                   )}
                 </select>
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Burst / intervalo (ms)</span>
+                <span class="mb-1 block text-base-content/70">Burst / interval (ms)</span>
                 <span class="flex gap-2">
                   <input
                     type="number"
@@ -301,14 +301,14 @@ defmodule WhelxWeb.ConfigLive do
                 </span>
               </label>
               <div class="col-span-2">
-                <.btn type="submit" variant="primary">Salvar</.btn>
+                <.btn type="submit" variant="primary">Save</.btn>
               </div>
             </.form>
           </.panel>
 
-          <.panel title="Tokens de acesso">
+          <.panel title="Access tokens">
             <:actions>
-              <.btn phx-click="create_token">Gerar token</.btn>
+              <.btn phx-click="create_token">Generate token</.btn>
             </:actions>
             <ul class="space-y-2">
               <li
@@ -322,7 +322,7 @@ defmodule WhelxWeb.ConfigLive do
                   variant="danger"
                   phx-click="delete_token"
                   phx-value-id={token.token}
-                  data-confirm="Apagar token?"
+                  data-confirm="Delete this token?"
                 >
                   <.icon name="hero-trash" class="size-4" />
                 </.btn>
@@ -331,11 +331,11 @@ defmodule WhelxWeb.ConfigLive do
           </.panel>
         </div>
 
-        <.panel title="WABAs e números" class="mt-4">
+        <.panel title="WABAs and phone numbers" class="mt-4">
           <:actions>
             <.form for={%{}} as={:waba} id="waba-form" phx-submit="add_waba" class="flex gap-2">
-              <input name="waba[name]" placeholder="Nome do WABA" required class={input_class()} />
-              <.btn type="submit">Adicionar</.btn>
+              <input name="waba[name]" placeholder="WABA name" required class={input_class()} />
+              <.btn type="submit">Add</.btn>
             </.form>
           </:actions>
           <div class="space-y-3">
@@ -346,21 +346,21 @@ defmodule WhelxWeb.ConfigLive do
                 <span
                   :if={waba.override_callback_uri}
                   class="font-mono text-xs text-sky-600"
-                  title="override_callback_uri do WABA"
+                  title="WABA override_callback_uri"
                 >
                   → {waba.override_callback_uri}
                 </span>
                 <.copy_button text={waba.id} label="" />
                 <button phx-click="toggle_subscribed" phx-value-id={waba.id} class="ml-auto">
                   <.badge color={if waba.subscribed, do: "green", else: "yellow"}>
-                    {if waba.subscribed, do: "subscribed_apps ✓", else: "sem subscribed_apps"}
+                    {if waba.subscribed, do: "subscribed_apps ✓", else: "no subscribed_apps"}
                   </.badge>
                 </button>
                 <.btn
                   variant="danger"
                   phx-click="delete_waba"
                   phx-value-id={waba.id}
-                  data-confirm="Apagar WABA e seus números?"
+                  data-confirm="Delete this WABA and its phone numbers?"
                 >
                   <.icon name="hero-trash" class="size-4" />
                 </.btn>
@@ -386,7 +386,7 @@ defmodule WhelxWeb.ConfigLive do
                       variant="danger"
                       phx-click="delete_phone"
                       phx-value-id={phone.id}
-                      data-confirm="Apagar número?"
+                      data-confirm="Delete this phone number?"
                     >
                       <.icon name="hero-trash" class="size-4" />
                     </.btn>
@@ -409,7 +409,7 @@ defmodule WhelxWeb.ConfigLive do
                 />
                 <input
                   name="phone[verified_name]"
-                  placeholder="Nome verificado"
+                  placeholder="Verified name"
                   required
                   class={input_class()}
                 />
@@ -419,7 +419,7 @@ defmodule WhelxWeb.ConfigLive do
                   placeholder="80 msg/s"
                   class={input_class()}
                 />
-                <.btn type="submit">Adicionar número</.btn>
+                <.btn type="submit">Add number</.btn>
               </.form>
             </div>
           </div>

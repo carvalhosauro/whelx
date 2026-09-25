@@ -431,7 +431,7 @@ defmodule Whelx.Messaging do
     case message do
       nil ->
         {:error,
-         Error.invalid_parameter("message_id #{wamid} não encontrado nesta linha",
+         Error.invalid_parameter("message_id #{wamid} not found on this phone number",
            details: "Invalid message id"
          )}
 

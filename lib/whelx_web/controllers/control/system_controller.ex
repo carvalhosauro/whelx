@@ -46,7 +46,7 @@ defmodule WhelxWeb.Control.SystemController do
         json(conn, JSON.chaos(profile))
 
       {:error, :unknown_preset} ->
-        {:error, "preset desconhecido: #{preset} (use #{Enum.join(Chaos.presets(), ", ")})"}
+        {:error, "unknown preset: #{preset} (use #{Enum.join(Chaos.presets(), ", ")})"}
     end
   end
 

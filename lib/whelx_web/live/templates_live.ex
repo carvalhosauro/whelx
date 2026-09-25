@@ -42,7 +42,7 @@ defmodule WhelxWeb.TemplatesLive do
 
   def handle_event("policy", %{"policy" => params}, socket) do
     case Accounts.update_settings(params) do
-      {:ok, _} -> {:noreply, socket |> put_flash(:info, "Política salva") |> load()}
+      {:ok, _} -> {:noreply, socket |> put_flash(:info, "Policy saved") |> load()}
       {:error, cs} -> {:noreply, put_flash(socket, :error, inspect(Control.changeset_errors(cs)))}
     end
   end
@@ -61,25 +61,25 @@ defmodule WhelxWeb.TemplatesLive do
     <Layouts.app flash={@flash} active={:templates}>
       <.page
         title="Templates"
-        subtitle="Criados pela sua aplicação via POST /{waba}/message_templates. Aprove ou rejeite aqui."
+        subtitle="Created by your application via POST /{waba}/message_templates. Approve or reject them here."
       >
-        <.panel title="Política de aprovação" class="mb-4">
+        <.panel title="Approval policy" class="mb-4">
           <form id="policy-form" phx-submit="policy" class="flex flex-wrap items-end gap-2 text-sm">
             <label>
-              <span class="mb-1 block text-base-content/70">Política</span>
+              <span class="mb-1 block text-base-content/70">Policy</span>
               <select name="policy[template_approval_policy]" class={input_class()}>
                 {Phoenix.HTML.Form.options_for_select(
                   [
                     {"Manual", "manual"},
-                    {"Aprovar automático", "auto_approve"},
-                    {"Rejeitar automático", "auto_reject"}
+                    {"Auto-approve", "auto_approve"},
+                    {"Auto-reject", "auto_reject"}
                   ],
                   @settings.template_approval_policy
                 )}
               </select>
             </label>
             <label>
-              <span class="mb-1 block text-base-content/70">Após (ms)</span>
+              <span class="mb-1 block text-base-content/70">After (ms)</span>
               <input
                 type="number"
                 name="policy[template_review_after_ms]"
@@ -88,14 +88,14 @@ defmodule WhelxWeb.TemplatesLive do
               />
             </label>
             <label>
-              <span class="mb-1 block text-base-content/70">Motivo de rejeição</span>
+              <span class="mb-1 block text-base-content/70">Rejection reason</span>
               <input
                 name="policy[template_reject_reason]"
                 value={@settings.template_reject_reason}
                 class={input_class()}
               />
             </label>
-            <.btn type="submit" variant="primary">Salvar</.btn>
+            <.btn type="submit" variant="primary">Save</.btn>
           </form>
         </.panel>
 
@@ -104,7 +104,7 @@ defmodule WhelxWeb.TemplatesLive do
             <table class="w-full text-sm">
               <thead class="text-left text-xs uppercase text-base-content/60">
                 <tr>
-                  <th class="py-2">Nome</th><th>WABA</th><th>Categoria</th><th>Status</th><th></th>
+                  <th class="py-2">Name</th><th>WABA</th><th>Category</th><th>Status</th><th></th>
                 </tr>
               </thead>
               <tbody>
@@ -120,14 +120,14 @@ defmodule WhelxWeb.TemplatesLive do
                     <span :if={t.rejected_reason} class="block text-[10px] text-red-600">{t.rejected_reason}</span>
                   </td>
                   <td class="whitespace-nowrap text-right">
-                    <.btn variant="ghost" phx-click="preview" phx-value-id={t.id}>Ver</.btn>
+                    <.btn variant="ghost" phx-click="preview" phx-value-id={t.id}>View</.btn>
                     <.btn
                       :if={t.status != "APPROVED"}
                       variant="ghost"
                       phx-click="approve"
                       phx-value-id={t.id}
                     >
-                      Aprovar
+                      Approve
                     </.btn>
                     <.btn
                       :if={t.status != "REJECTED"}
@@ -135,14 +135,14 @@ defmodule WhelxWeb.TemplatesLive do
                       phx-click="reject"
                       phx-value-id={t.id}
                     >
-                      Rejeitar
+                      Reject
                     </.btn>
                   </td>
                 </tr>
               </tbody>
             </table>
             <p :if={@templates == []} class="py-6 text-center text-sm text-base-content/60">
-              Nenhum template. Crie pela sua aplicação ou via POST /_whelx/seed.
+              No templates yet. Create them from your application or via POST /_whelx/seed.
             </p>
           </.panel>
 

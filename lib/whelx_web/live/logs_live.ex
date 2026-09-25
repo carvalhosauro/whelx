@@ -47,7 +47,7 @@ defmodule WhelxWeb.LogsLive do
 
   def handle_event("redeliver", %{"id" => id}, socket) do
     {:ok, _} = Webhooks.redeliver(String.to_integer(id))
-    {:noreply, socket |> put_flash(:info, "Webhook reenfileirado") |> load()}
+    {:noreply, socket |> put_flash(:info, "Webhook requeued") |> load()}
   end
 
   @impl true
@@ -85,7 +85,7 @@ defmodule WhelxWeb.LogsLive do
     <Layouts.app flash={@flash} active={:logs}>
       <.page
         title="Logs"
-        subtitle="Tudo que a sua aplicação chamou na Graph API fake e tudo que o whelx entregou por webhook."
+        subtitle="Everything your application called on the emulated Graph API and everything whelx delivered by webhook."
       >
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <.btn
@@ -102,11 +102,17 @@ defmodule WhelxWeb.LogsLive do
           >
             Webhooks
           </.btn>
-          <form :if={@tab == :requests} phx-change="filter" class="ml-auto" onsubmit="return false">
+          <form
+            :if={@tab == :requests}
+            id="logs-filter"
+            phx-change="filter"
+            class="ml-auto"
+            onsubmit="return false"
+          >
             <input
               name="filter"
               value={@filter}
-              placeholder="Filtrar path"
+              placeholder="Filter by path"
               phx-debounce="200"
               class={input_class()}
             />
@@ -118,7 +124,7 @@ defmodule WhelxWeb.LogsLive do
             <table :if={@tab == :requests} class="w-full text-xs">
               <thead class="text-left uppercase text-base-content/60">
                 <tr>
-                  <th class="py-2">Hora</th><th>Método</th><th>Path</th><th>Status</th><th>ms</th><th>
+                  <th class="py-2">Time</th><th>Method</th><th>Path</th><th>Status</th><th>ms</th><th>
                   </th>
                 </tr>
               </thead>
@@ -141,7 +147,7 @@ defmodule WhelxWeb.LogsLive do
                   <td>{r.duration_ms}</td>
                   <td>
                     <.badge :if={r.chaos_tag} color="yellow">{r.chaos_tag}</.badge>
-                    <.badge :if={r.internal_error} color="red">erro interno</.badge>
+                    <.badge :if={r.internal_error} color="red">internal error</.badge>
                   </td>
                 </tr>
               </tbody>
@@ -150,7 +156,7 @@ defmodule WhelxWeb.LogsLive do
             <table :if={@tab == :deliveries} class="w-full text-xs">
               <thead class="text-left uppercase text-base-content/60">
                 <tr>
-                  <th class="py-2">#</th><th>Tipo</th><th>Estado</th><th>HTTP</th><th>Tent.</th><th>
+                  <th class="py-2">#</th><th>Kind</th><th>State</th><th>HTTP</th><th>Attempts</th><th>
                     wamid
                   </th><th></th>
                 </tr>
@@ -175,14 +181,14 @@ defmodule WhelxWeb.LogsLive do
                   <td>{d.attempts}</td>
                   <td class="max-w-[10rem] truncate font-mono">{d.message_wamid}</td>
                   <td class="text-right">
-                    <.btn variant="ghost" phx-click="redeliver" phx-value-id={d.id}>Reentregar</.btn>
+                    <.btn variant="ghost" phx-click="redeliver" phx-value-id={d.id}>Redeliver</.btn>
                   </td>
                 </tr>
               </tbody>
             </table>
           </.panel>
 
-          <.panel title="Detalhe">
+          <.panel title="Details">
             <%= case @selected do %>
               <% {:request, r} when not is_nil(r) -> %>
                 <p class="mb-2 font-mono text-xs">
@@ -200,7 +206,7 @@ defmodule WhelxWeb.LogsLive do
                 <p class="mb-3 break-all font-mono text-[11px]">{d.signature || "—"}</p>
                 <.json_block data={JSON.delivery(d)} class="max-h-[32rem]" />
               <% _ -> %>
-                <p class="text-sm text-base-content/60">Clique numa linha para ver o JSON.</p>
+                <p class="text-sm text-base-content/60">Click a row to see its JSON.</p>
             <% end %>
           </.panel>
         </div>

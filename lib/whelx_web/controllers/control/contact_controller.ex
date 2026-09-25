@@ -61,7 +61,7 @@ defmodule WhelxWeb.Control.ContactController do
     end
   end
 
-  def reply_interactive(_conn, _params), do: {:error, "wamid e id são obrigatórios"}
+  def reply_interactive(_conn, _params), do: {:error, "wamid and id are required"}
 
   defp message_json(message),
     do: message.wamid |> Messaging.get_message_by_wamid() |> JSON.message()

@@ -6,7 +6,7 @@ defmodule Whelx.Mcp.Tools do
 
   @tools [
     {"seed",
-     "Cria/atualiza o cenário (app, wabas com phone_numbers, tokens, contacts, templates, settings, chaos). Idempotente.",
+     "Creates/updates the scenario (app, wabas with phone_numbers, tokens, contacts, templates, settings, chaos). Idempotent.",
      %{
        "app" => %{"type" => "object"},
        "wabas" => %{"type" => "array"},
@@ -17,7 +17,7 @@ defmodule Whelx.Mcp.Tools do
        "chaos" => %{"type" => "object"}
      }, []},
     {"reset",
-     "Apaga dados de teste (mensagens, conversas, webhooks, logs). keep: lista com contacts e/ou templates.",
+     "Deletes test data (messages, conversations, webhooks, logs). keep: list with contacts and/or templates.",
      %{
        "keep" => %{
          "type" => "array",
@@ -25,11 +25,11 @@ defmodule Whelx.Mcp.Tools do
        }
      }, []},
     {"get_config",
-     "Configuração atual: app (secret, verify token, webhook_url), wabas, números, tokens, settings, caos.",
+     "Current configuration: app (secret, verify token, webhook_url), wabas, phone numbers, tokens, settings, chaos.",
      %{}, []},
-    {"env_block", "Bloco .env para a sua aplicação apontar para o whelx.", %{}, []},
+    {"env_block", ".env block that points your application at whelx.", %{}, []},
     {"send_as_contact",
-     "Um contato fake manda mensagem para um número business. type: text|location|reaction|image|audio|video|document.",
+     "A fake contact sends a message to a business number. type: text|location|reaction|image|audio|video|document.",
      %{
        "wa_id" => %{"type" => "string"},
        "type" => %{"type" => "string"},
@@ -48,17 +48,17 @@ defmodule Whelx.Mcp.Tools do
        "file_name" => %{"type" => "string"}
      }, ["wa_id", "type"]},
     {"reply_interactive",
-     "O contato toca num botão, item de lista ou quick reply de template de uma mensagem do business.",
+     "The contact taps a button, list row or template quick reply on a business message.",
      %{
        "wa_id" => %{"type" => "string"},
        "wamid" => %{"type" => "string"},
        "id" => %{
          "type" => "string",
-         "description" => "reply id, row id, índice ou payload do quick reply"
+         "description" => "reply id, row id, quick reply index or payload"
        }
      }, ["wa_id", "wamid", "id"]},
     {"wait_for",
-     "Espera (long-poll) até: kind=outbound_message (contact, after, type), status (wamid, status) ou webhook_delivery (message_wamid, state).",
+     "Waits (long-poll) until: kind=outbound_message (contact, after, type), status (wamid, status) or webhook_delivery (message_wamid, state).",
      %{
        "kind" => %{
          "type" => "string",
@@ -74,7 +74,7 @@ defmodule Whelx.Mcp.Tools do
        "timeout_ms" => %{"type" => "integer"}
      }, ["kind"]},
     {"list_messages",
-     "Lista mensagens (mais recentes primeiro). Filtros: contact, direction, type, status, phone_number_id, limit.",
+     "Lists messages (newest first). Filters: contact, direction, type, status, phone_number_id, limit.",
      %{
        "contact" => %{"type" => "string"},
        "direction" => %{"type" => "string"},
@@ -83,9 +83,9 @@ defmodule Whelx.Mcp.Tools do
        "phone_number_id" => %{"type" => "string"},
        "limit" => %{"type" => "integer"}
      }, []},
-    {"list_contacts", "Lista contatos fake.", %{}, []},
+    {"list_contacts", "Lists fake contacts.", %{}, []},
     {"set_contact",
-     "Altera contato: behavior (normal|invalid_number|blocked), online, read_policy (on_open|auto|never), read_after_ms, profile_name.",
+     "Updates a contact: behavior (normal|invalid_number|blocked), online, read_policy (on_open|auto|never), read_after_ms, profile_name.",
      %{
        "wa_id" => %{"type" => "string"},
        "behavior" => %{"type" => "string"},
@@ -94,15 +94,15 @@ defmodule Whelx.Mcp.Tools do
        "read_after_ms" => %{"type" => "integer"},
        "profile_name" => %{"type" => "string"}
      }, ["wa_id"]},
-    {"bulk_contacts", "Gera N contatos fake (para campanhas).",
+    {"bulk_contacts", "Generates N fake contacts (for campaigns).",
      %{"count" => %{"type" => "integer"}}, ["count"]},
-    {"list_templates", "Lista templates (todos os WABAs ou waba_id).",
+    {"list_templates", "Lists templates (all WABAs or waba_id).",
      %{"waba_id" => %{"type" => "string"}}, []},
-    {"approve_template", "Aprova um template.", %{"id" => %{"type" => "string"}}, ["id"]},
-    {"reject_template", "Rejeita um template com motivo.",
+    {"approve_template", "Approves a template.", %{"id" => %{"type" => "string"}}, ["id"]},
+    {"reject_template", "Rejects a template with a reason.",
      %{"id" => %{"type" => "string"}, "reason" => %{"type" => "string"}}, ["id"]},
     {"set_chaos",
-     "Altera o caos: preset (off|flaky|hostile) ou campos (seed, latency_min_ms, latency_max_ms, *_rate, sync_error_codes, async_fail_codes, webhook_extra_delay_ms).",
+     "Updates chaos: preset (off|flaky|hostile) or fields (seed, latency_min_ms, latency_max_ms, *_rate, sync_error_codes, async_fail_codes, webhook_extra_delay_ms).",
      %{
        "preset" => %{"type" => "string"},
        "seed" => %{"type" => "integer"},
@@ -116,16 +116,16 @@ defmodule Whelx.Mcp.Tools do
        "latency_max_ms" => %{"type" => "integer"}
      }, []},
     {"list_webhook_deliveries",
-     "Entregas de webhook (payload, assinatura, status HTTP, tentativas). Filtros: message_wamid, state, limit.",
+     "Webhook deliveries (payload, signature, HTTP status, attempts). Filters: message_wamid, state, limit.",
      %{
        "message_wamid" => %{"type" => "string"},
        "state" => %{"type" => "string"},
        "limit" => %{"type" => "integer"}
      }, []},
-    {"redeliver_webhook", "Reentrega um webhook (testa idempotência).",
+    {"redeliver_webhook", "Redelivers a webhook (tests idempotency).",
      %{"id" => %{"type" => "integer"}}, ["id"]},
-    {"verify_webhook", "Faz o handshake hub.challenge contra a webhook_url.", %{}, []},
-    {"expire_window", "Força a janela de 24h de uma conversa como vencida.",
+    {"verify_webhook", "Runs the hub.challenge handshake against the webhook_url.", %{}, []},
+    {"expire_window", "Forces a conversation's 24h window to expire.",
      %{"conversation_id" => %{"type" => "integer"}}, ["conversation_id"]}
   ]
 
@@ -172,7 +172,8 @@ defmodule Whelx.Mcp.Tools do
   def call("list_contacts", _args), do: {:ok, Enum.map(Contacts.list_contacts(), &JSON.contact/1)}
 
   def call("set_contact", %{"wa_id" => wa_id} = args) do
-    with %{} = contact <- Contacts.get_contact(wa_id) || {:error, "contato #{wa_id} não existe"},
+    with %{} = contact <-
+           Contacts.get_contact(wa_id) || {:error, "contact #{wa_id} does not exist"},
          {:ok, contact} <- Contacts.update_contact(contact, Map.drop(args, ["wa_id", "online"])),
          {:ok, contact} <-
            if(is_boolean(args["online"]),
@@ -204,7 +205,7 @@ defmodule Whelx.Mcp.Tools do
   def call("set_chaos", %{"preset" => preset} = args) when map_size(args) == 1 do
     case Chaos.apply_preset(preset) do
       {:ok, profile} -> {:ok, JSON.chaos(profile)}
-      {:error, _} -> {:error, "preset desconhecido: #{preset}"}
+      {:error, _} -> {:error, "unknown preset: #{preset}"}
     end
   end
 
@@ -245,15 +246,15 @@ defmodule Whelx.Mcp.Tools do
     {:ok, _} = Messaging.expire_window(conversation)
     {:ok, JSON.conversation(Messaging.get_conversation!(id))}
   rescue
-    Ecto.NoResultsError -> {:error, "conversa #{id} não existe"}
+    Ecto.NoResultsError -> {:error, "conversation #{id} does not exist"}
   end
 
-  def call(name, _args), do: {:error, "argumentos inválidos para #{name}"}
+  def call(name, _args), do: {:error, "invalid arguments for #{name}"}
 
   defp with_template(id, fun) do
     case Templates.get_template(id) do
       nil ->
-        {:error, "template #{id} não existe"}
+        {:error, "template #{id} does not exist"}
 
       template ->
         fun.(template)

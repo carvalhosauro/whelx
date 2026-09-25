@@ -67,7 +67,7 @@ defmodule Whelx.Control.Waiter do
   defp condition(%{"kind" => "outbound_message"} = p) do
     case Attrs.digits(p["contact"]) do
       "" ->
-        {:error, "contact é obrigatório"}
+        {:error, "contact is required"}
 
       wa_id ->
         {:ok,
@@ -85,18 +85,18 @@ defmodule Whelx.Control.Waiter do
        do: {:ok, %{kind: :status, wamid: wamid, status: status}}
 
   defp condition(%{"kind" => "status"}),
-    do: {:error, "wamid e status (sent|delivered|read|failed) são obrigatórios"}
+    do: {:error, "wamid and status (sent|delivered|read|failed) are required"}
 
   defp condition(%{"kind" => "webhook_delivery", "message_wamid" => wamid} = p)
        when is_binary(wamid),
        do: {:ok, %{kind: :webhook_delivery, wamid: wamid, state: p["state"] || "delivered"}}
 
-  defp condition(%{"kind" => "webhook_delivery"}), do: {:error, "message_wamid é obrigatório"}
+  defp condition(%{"kind" => "webhook_delivery"}), do: {:error, "message_wamid is required"}
 
   defp condition(p),
     do:
       {:error,
-       "kind inválido: #{inspect(p["kind"])} (use outbound_message, status ou webhook_delivery)"}
+       "kind is invalid: #{inspect(p["kind"])} (use outbound_message, status or webhook_delivery)"}
 
   defp topic(:webhook_delivery), do: "deliveries"
   defp topic(_), do: "messages"

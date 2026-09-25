@@ -23,9 +23,9 @@ defmodule Whelx.Graph.ErrorTest do
     assert is_binary(trace)
     refute Map.has_key?(body["error"], "error_subcode")
 
-    body = Error.to_body(Error.invalid_parameter("nome inválido", subcode: 2_388_024))
+    body = Error.to_body(Error.invalid_parameter("invalid name", subcode: 2_388_024))
     assert body["error"]["error_subcode"] == 2_388_024
-    assert body["error"]["error_user_msg"] == "nome inválido"
+    assert body["error"]["error_user_msg"] == "invalid name"
   end
 
   test "unknown_object/2 mirrors Meta's missing object error" do
@@ -36,7 +36,7 @@ defmodule Whelx.Graph.ErrorTest do
   end
 
   test "unsupported/1 flags whelx gaps loudly" do
-    assert Error.unsupported("type=image").user_msg == "whelx: não suportado (type=image)"
+    assert Error.unsupported("type=image").user_msg == "whelx: not supported (type=image)"
   end
 
   test "async/2 builds webhook status errors" do

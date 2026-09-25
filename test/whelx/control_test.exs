@@ -134,7 +134,7 @@ defmodule Whelx.ControlTest do
 
       assert %{"voice" => true, "id" => _} = Message.content(audio)
 
-      assert {:error, "tipo não suportado: sticker"} =
+      assert {:error, "unsupported type: sticker"} =
                Control.send_as_contact("5511977776666", %{"type" => "sticker"})
 
       assert {:error, _} =

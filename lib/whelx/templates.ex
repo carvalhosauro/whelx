@@ -94,7 +94,7 @@ defmodule Whelx.Templates do
   defp with_example(component, key, shape) do
     case variable_count(component["text"]) do
       0 -> component
-      n -> Map.put(component, "example", %{key => shape.(Enum.map(1..n, &"exemplo #{&1}"))})
+      n -> Map.put(component, "example", %{key => shape.(Enum.map(1..n, &"example #{&1}"))})
     end
   end
 
@@ -115,7 +115,7 @@ defmodule Whelx.Templates do
   def delete_by_name(waba_id, name) do
     case Repo.delete_all(from t in Template, where: t.waba_id == ^waba_id and t.name == ^name) do
       {0, _} ->
-        {:error, Error.invalid_parameter("template #{name} não encontrado", subcode: 2_593_002)}
+        {:error, Error.invalid_parameter("template #{name} not found", subcode: 2_593_002)}
 
       {count, _} ->
         broadcast({:ok, count})
@@ -236,7 +236,7 @@ defmodule Whelx.Templates do
        ) do
       {:error,
        Error.invalid_parameter(
-         "Já existe conteúdo para #{params["name"]} em #{params["language"]}.",
+         "Content for #{params["name"]} in #{params["language"]} already exists.",
          subcode: 2_388_024,
          user_title: "Content in This Language Already Exists"
        )}
@@ -259,7 +259,7 @@ defmodule Whelx.Templates do
       [bad | _] ->
         {:error,
          Error.invalid_parameter(
-           "example.header_handle #{bad} não foi enviado via upload resumable",
+           "example.header_handle #{bad} was not uploaded via the resumable upload API",
            subcode: 2_494_102
          )}
     end

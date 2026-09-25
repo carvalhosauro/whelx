@@ -157,7 +157,7 @@ defmodule Whelx.Control do
   def default_phone_id do
     case Accounts.list_all_phone_numbers() do
       [phone | _] -> {:ok, phone.id}
-      [] -> {:error, "nenhum número configurado"}
+      [] -> {:error, "no phone number configured"}
     end
   end
 
@@ -189,7 +189,7 @@ defmodule Whelx.Control do
           media(phone_id, wa_id, type, attrs)
 
         type ->
-          {:error, "tipo não suportado: #{type}"}
+          {:error, "unsupported type: #{type}"}
       end
     end
   end
@@ -197,13 +197,13 @@ defmodule Whelx.Control do
   defp valid_wa_id(wa_id) do
     if String.length(Attrs.digits(wa_id)) in 8..15,
       do: :ok,
-      else: {:error, "wa_id inválido: #{inspect(wa_id)} (8 a 15 dígitos)"}
+      else: {:error, "wa_id is invalid: #{inspect(wa_id)} (8 to 15 digits)"}
   end
 
   defp phone_id(%{"phone_number_id" => id}) when is_binary(id) and id != "" do
     if Accounts.get_phone_number(id),
       do: {:ok, id},
-      else: {:error, "phone_number_id #{id} não existe"}
+      else: {:error, "phone_number_id #{id} does not exist"}
   end
 
   defp phone_id(_attrs), do: default_phone_id()
@@ -231,7 +231,7 @@ defmodule Whelx.Control do
         )
 
       _ ->
-        {:error, "media_base64 inválido"}
+        {:error, "media_base64 is invalid"}
     end
   end
 
@@ -260,7 +260,7 @@ defmodule Whelx.Control do
   defp fetch_outbound(wamid) do
     case Messaging.get_message_by_wamid(wamid) do
       %Message{direction: "outbound"} = message -> {:ok, message}
-      %Message{} -> {:error, "a mensagem #{wamid} não foi enviada pelo business"}
+      %Message{} -> {:error, "message #{wamid} was not sent by the business"}
       nil -> {:error, :not_found}
     end
   end
@@ -268,7 +268,7 @@ defmodule Whelx.Control do
   defp same_contact(message, wa_id) do
     if message.conversation.contact_wa_id == Attrs.digits(wa_id),
       do: :ok,
-      else: {:error, "a mensagem não pertence ao contato #{wa_id}"}
+      else: {:error, "the message does not belong to contact #{wa_id}"}
   end
 
   defp reply_content(%Message{type: "interactive"} = message, id) do
@@ -281,7 +281,7 @@ defmodule Whelx.Control do
                &(get_in(&1, ["reply", "id"]) == id)
              ) do
           nil ->
-            {:error, "botão #{id} não existe"}
+            {:error, "button #{id} does not exist"}
 
           button ->
             {:ok, "interactive",
@@ -300,7 +300,7 @@ defmodule Whelx.Control do
 
         case Enum.find(rows, &(&1["id"] == id)) do
           nil ->
-            {:error, "linha #{id} não existe"}
+            {:error, "row #{id} does not exist"}
 
           row ->
             reply = %{"id" => id, "title" => row["title"]}
@@ -314,7 +314,7 @@ defmodule Whelx.Control do
         end
 
       other ->
-        {:error, "interactive #{other} não tem opções clicáveis"}
+        {:error, "interactive #{other} has no tappable options"}
     end
   end
 
@@ -326,7 +326,7 @@ defmodule Whelx.Control do
            &(&1["type"] == "QUICK_REPLY" and (&1["index"] == id or &1["payload"] == id))
          ) do
       nil ->
-        {:error, "quick reply #{id} não existe"}
+        {:error, "quick reply #{id} does not exist"}
 
       button ->
         {:ok, "button",
@@ -334,5 +334,5 @@ defmodule Whelx.Control do
     end
   end
 
-  defp reply_content(_message, _id), do: {:error, "mensagem sem opções clicáveis"}
+  defp reply_content(_message, _id), do: {:error, "message has no tappable options"}
 end

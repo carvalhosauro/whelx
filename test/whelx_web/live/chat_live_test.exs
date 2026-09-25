@@ -33,7 +33,7 @@ defmodule WhelxWeb.ChatLiveTest do
     {:ok, _view, html} = live(conn, ~p"/")
     assert html =~ "Ana Souza"
     {:ok, _view, html} = live(conn, chat_path(phone, "5511977776666"))
-    assert html =~ "Janela fechada"
+    assert html =~ "Window closed"
   end
 
   test "sending text as the contact creates an inbound message", %{conn: conn, phone: phone} do
@@ -45,7 +45,7 @@ defmodule WhelxWeb.ChatLiveTest do
 
     assert Message.content(msg) == %{"body" => "quero uma pizza"}
     assert render(view) =~ "quero uma pizza"
-    assert render(view) =~ "Janela aberta"
+    assert render(view) =~ "Window open"
   end
 
   test "business messages render live and buttons are clickable", %{conn: conn, phone: phone} do
@@ -143,7 +143,7 @@ defmodule WhelxWeb.ChatLiveTest do
     assert html =~ "Calabresa"
     assert html =~ "Rastrear"
     assert html =~ "R$ 45,00"
-    assert html =~ "Copiar código Pix"
+    assert html =~ "Copy Pix code"
 
     view |> element(~s(button[phx-click="reply"][phx-value-id="calabresa"])) |> render_click()
     [last | _] = Messaging.list_messages(%{"contact" => "5511977776666"})
@@ -251,8 +251,8 @@ defmodule WhelxWeb.ChatLiveTest do
   test "expire window button closes the window", %{conn: conn, phone: phone} do
     {:ok, view, _} = live(conn, chat_path(phone, "5511977776666"))
     view |> form("#composer", msg: %{text: "oi"}) |> render_submit()
-    html = view |> element("button", "Vencer janela") |> render_click()
-    assert html =~ "Janela fechada"
+    html = view |> element("button", "Expire window") |> render_click()
+    assert html =~ "Window closed"
   end
 
   test "media route serves stored files for the UI", %{conn: conn} do

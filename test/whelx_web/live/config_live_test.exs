@@ -13,7 +13,7 @@ defmodule WhelxWeb.ConfigLiveTest do
     assert html =~ "META_APP_ID=#{app.id}"
     assert html =~ "WEBHOOK_VERIFY_TOKEN=#{app.verify_token}"
     refute html =~ ~s(value="#{app.app_secret}")
-    html = view |> element("button", "Mostrar") |> render_click()
+    html = view |> element("button", "Show") |> render_click()
     assert html =~ app.app_secret
   end
 
@@ -70,20 +70,20 @@ defmodule WhelxWeb.ConfigLiveTest do
     assert [_] = Accounts.list_phone_numbers(waba.id)
 
     before = length(Accounts.list_tokens())
-    view |> element("button", "Gerar token") |> render_click()
+    view |> element("button", "Generate token") |> render_click()
     assert length(Accounts.list_tokens()) == before + 1
   end
 
   test "regenerates the app secret", %{conn: conn, app: app} do
     {:ok, view, _} = live(conn, ~p"/config")
-    view |> element("button", "Regenerar") |> render_click()
+    view |> element("button", "Regenerate") |> render_click()
     assert Accounts.get_app!().app_secret != app.app_secret
   end
 
   test "navigation sidebar is present", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/config")
 
-    for label <- ["Chat", "Contatos", "Templates", "Campanhas", "Logs", "Caos", "Config"],
+    for label <- ["Chat", "Contacts", "Templates", "Campaigns", "Logs", "Chaos", "Config"],
         do: assert(html =~ label)
   end
 end

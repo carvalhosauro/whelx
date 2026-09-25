@@ -48,10 +48,10 @@ defmodule Whelx.Graph.Validation do
       BadMapError,
       CaseClauseError
     ] ->
-      fail("corpo da requisição com formato inválido")
+      fail("request body has an invalid shape")
   end
 
-  def validate_send(_params), do: fail("corpo da requisição inválido")
+  def validate_send(_params), do: fail("invalid request body")
 
   defp do_validate_send(params) do
     with :ok <- messaging_product(params),
@@ -76,41 +76,41 @@ defmodule Whelx.Graph.Validation do
 
   defp context(nil), do: {:ok, nil}
   defp context(%{"message_id" => id}) when is_binary(id), do: {:ok, id}
-  defp context(_), do: fail("context deve ser {message_id: \"wamid...\"}")
+  defp context(_), do: fail("context must be {message_id: \"wamid...\"}")
 
   @spec validate_template_definition(map()) :: :ok | {:error, Error.t()}
   def validate_template_definition(params), do: TemplateDefinition.validate(params)
 
   defp messaging_product(%{"messaging_product" => "whatsapp"}), do: :ok
-  defp messaging_product(_), do: fail(~s(messaging_product deve ser "whatsapp"))
+  defp messaging_product(_), do: fail(~s(messaging_product must be "whatsapp"))
 
   defp recipient_type(%{"recipient_type" => rt}) when rt not in [nil, "individual"],
-    do: fail(~s(recipient_type deve ser "individual"))
+    do: fail(~s(recipient_type must be "individual"))
 
   defp recipient_type(_), do: :ok
 
   defp recipient(%{"to" => to}) when not (is_binary(to) or is_integer(to)),
-    do: fail("to deve ser texto com o número")
+    do: fail("to must be a string with the phone number")
 
   defp recipient(params) do
     digits = Attrs.digits(params["to"])
 
     if String.length(digits) in 8..15,
       do: {:ok, digits},
-      else: fail("to inválido: #{inspect(params["to"])}")
+      else: fail("to is invalid: #{inspect(params["to"])}")
   end
 
   defp supported(type) when type in @supported, do: :ok
 
   defp supported(type) when type in @known,
-    do: {:error, Error.unsupported("envio de mensagem type=#{type}")}
+    do: {:error, Error.unsupported("sending message type=#{type}")}
 
-  defp supported(type), do: fail("type desconhecido: #{type}")
+  defp supported(type), do: fail("unknown type: #{type}")
 
   defp content(params, type) do
     case params[type] do
       map when is_map(map) -> {:ok, map}
-      _ -> fail("objeto #{type} ausente")
+      _ -> fail("#{type} object is missing")
     end
   end
 
@@ -119,7 +119,7 @@ defmodule Whelx.Graph.Validation do
          :ok <- max_len(body, 4096, "text.body") do
       if is_nil(content["preview_url"]) or is_boolean(content["preview_url"]),
         do: :ok,
-        else: fail("text.preview_url deve ser booleano")
+        else: fail("text.preview_url must be a boolean")
     end
   end
 
@@ -140,19 +140,19 @@ defmodule Whelx.Graph.Validation do
         component_params(component)
 
       _ ->
-        fail("template.components contém componente inválido")
+        fail("template.components contains an invalid component")
     end)
   end
 
-  defp template_components(_), do: fail("template.components deve ser uma lista")
+  defp template_components(_), do: fail("template.components must be a list")
 
   defp component_params(%{"type" => "button"} = component) do
     cond do
       component["sub_type"] not in @button_sub_types ->
-        fail("button.sub_type inválido: #{inspect(component["sub_type"])}")
+        fail("button.sub_type is invalid: #{inspect(component["sub_type"])}")
 
       is_nil(component["index"]) ->
-        fail("button.index é obrigatório")
+        fail("button.index is required")
 
       true ->
         params_list(component["parameters"])
@@ -166,10 +166,10 @@ defmodule Whelx.Graph.Validation do
   defp params_list(list) when is_list(list) do
     if Enum.all?(list, &match?(%{"type" => type} when is_binary(type), &1)),
       do: :ok,
-      else: fail("parameters: cada item precisa de type")
+      else: fail("parameters: every item needs a type")
   end
 
-  defp params_list(_), do: fail("parameters deve ser uma lista")
+  defp params_list(_), do: fail("parameters must be a list")
 
   # Shared helpers (also used by the submodules)
 
@@ -184,15 +184,15 @@ defmodule Whelx.Graph.Validation do
   def string(map, key) when is_map(map) do
     case map[key] do
       value when is_binary(value) and value != "" -> {:ok, value}
-      _ -> fail("#{key} é obrigatório")
+      _ -> fail("#{key} is required")
     end
   end
 
-  def string(_map, key), do: fail("#{key} é obrigatório")
+  def string(_map, key), do: fail("#{key} is required")
 
   @doc false
   def max_len(value, max, field) do
-    if String.length(value) <= max, do: :ok, else: fail("#{field} excede #{max} caracteres")
+    if String.length(value) <= max, do: :ok, else: fail("#{field} exceeds #{max} characters")
   end
 
   @doc false
@@ -213,7 +213,7 @@ defmodule Whelx.Graph.Validation do
         :ok
 
       _ ->
-        fail("#{field} deve ser uma URL http(s): #{inspect(value)}")
+        fail("#{field} must be an http(s) URL: #{inspect(value)}")
     end
   end
 end

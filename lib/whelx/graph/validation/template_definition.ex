@@ -18,7 +18,7 @@ defmodule Whelx.Graph.Validation.TemplateDefinition do
          do: each(components, &component/1)
   end
 
-  def validate(_), do: fail("corpo inválido")
+  def validate(_), do: fail("invalid body")
 
   @spec type_of(map()) :: String.t()
   def type_of(component), do: component["type"] |> to_string() |> String.upcase()
@@ -26,22 +26,22 @@ defmodule Whelx.Graph.Validation.TemplateDefinition do
   defp name_format(name) do
     if Regex.match?(~r/^[a-z0-9_]{1,512}$/, name),
       do: :ok,
-      else: fail("name deve conter apenas a-z, 0-9 e _ (recebido #{inspect(name)})")
+      else: fail("name may only contain a-z, 0-9 and _ (got #{inspect(name)})")
   end
 
   defp category(category) do
     if String.upcase(category) in @categories,
       do: :ok,
-      else: fail("category inválida: #{category}")
+      else: fail("category is invalid: #{category}")
   end
 
   defp components(list) when is_list(list) and list != [], do: {:ok, list}
-  defp components(_), do: fail("components deve ser uma lista não vazia")
+  defp components(_), do: fail("components must be a non-empty list")
 
   defp body_count(components) do
     if Enum.count(components, &(type_of(&1) == "BODY")) == 1,
       do: :ok,
-      else: fail("components precisa de exatamente um BODY")
+      else: fail("components needs exactly one BODY")
   end
 
   defp component(component) do
@@ -61,7 +61,7 @@ defmodule Whelx.Graph.Validation.TemplateDefinition do
         buttons(component["buttons"])
 
       other ->
-        fail("tipo de componente inválido: #{other}")
+        fail("invalid component type: #{other}")
     end
   end
 
@@ -70,7 +70,7 @@ defmodule Whelx.Graph.Validation.TemplateDefinition do
 
     cond do
       format not in @formats ->
-        fail("HEADER.format inválido: #{inspect(component["format"])}")
+        fail("HEADER.format is invalid: #{inspect(component["format"])}")
 
       format == "TEXT" ->
         with {:ok, text} <- string(component, "text"),
@@ -83,7 +83,7 @@ defmodule Whelx.Graph.Validation.TemplateDefinition do
       true ->
         case get_in(component, ["example", "header_handle"]) do
           [handle | _] when is_binary(handle) -> :ok
-          _ -> fail("HEADER #{format} exige example.header_handle")
+          _ -> fail("HEADER #{format} requires example.header_handle")
         end
     end
   end
@@ -105,31 +105,31 @@ defmodule Whelx.Graph.Validation.TemplateDefinition do
         :ok
 
       vars != Enum.to_list(1..length(vars)) ->
-        fail("#{where}: variáveis devem ser sequenciais a partir de {{1}}")
+        fail("#{where}: variables must be sequential starting at {{1}}")
 
       true ->
         case examples do
           [first | _] when is_list(first) and length(first) == length(vars) -> :ok
-          _ -> fail("#{where}: example com #{length(vars)} valores é obrigatório")
+          _ -> fail("#{where}: example with #{length(vars)} value(s) is required")
         end
     end
   end
 
   defp buttons(list) when is_list(list) and length(list) in 1..10, do: each(list, &button/1)
-  defp buttons(_), do: fail("BUTTONS deve ter de 1 a 10 botões")
+  defp buttons(_), do: fail("BUTTONS must have 1 to 10 buttons")
 
   defp button(%{"type" => type} = button) do
     type = String.upcase(to_string(type))
 
     cond do
       type not in @button_types ->
-        fail("tipo de botão inválido: #{type}")
+        fail("invalid button type: #{type}")
 
       type == "URL" and not is_binary(button["url"]) ->
-        fail("botão URL exige url")
+        fail("URL button requires url")
 
       type == "PHONE_NUMBER" and not is_binary(button["phone_number"]) ->
-        fail("botão PHONE_NUMBER exige phone_number")
+        fail("PHONE_NUMBER button requires phone_number")
 
       type in ~w(QUICK_REPLY URL PHONE_NUMBER) ->
         with {:ok, text} <- string(button, "text"), do: max_len(text, 25, "button.text")
@@ -139,5 +139,5 @@ defmodule Whelx.Graph.Validation.TemplateDefinition do
     end
   end
 
-  defp button(_), do: fail("tipo de botão ausente")
+  defp button(_), do: fail("button type is missing")
 end

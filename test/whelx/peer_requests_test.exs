@@ -283,9 +283,9 @@ defmodule Whelx.PeerRequestsTest do
 
       [t] = Templates.list_all(waba.id)
       body = Enum.find(t.components, &(&1["type"] == "BODY"))
-      assert body["example"]["body_text"] == [["exemplo 1", "exemplo 2"]]
+      assert body["example"]["body_text"] == [["example 1", "example 2"]]
       header = Enum.find(t.components, &(&1["type"] == "HEADER"))
-      assert header["example"]["header_text"] == ["exemplo 1"]
+      assert header["example"]["header_text"] == ["example 1"]
     end
 
     test "Graph creation still requires examples", %{waba: waba} do

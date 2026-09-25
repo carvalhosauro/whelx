@@ -7,7 +7,7 @@ defmodule WhelxWeb.ContactsLive do
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: Events.subscribe("config")
-    {:ok, socket |> assign(page_title: "Contatos", errors: %{}) |> load()}
+    {:ok, socket |> assign(page_title: "Contacts", errors: %{}) |> load()}
   end
 
   defp load(socket), do: assign(socket, contacts: Contacts.list_contacts())
@@ -19,7 +19,7 @@ defmodule WhelxWeb.ContactsLive do
         {:noreply,
          socket
          |> assign(errors: %{})
-         |> put_flash(:info, "Contato #{contact.profile_name} criado")
+         |> put_flash(:info, "Contact #{contact.profile_name} created")
          |> load()}
 
       {:error, cs} ->
@@ -31,12 +31,12 @@ defmodule WhelxWeb.ContactsLive do
     case Integer.parse(count) do
       {n, _} ->
         case Contacts.bulk_create(n) do
-          {:ok, n} -> {:noreply, socket |> put_flash(:info, "#{n} contatos gerados") |> load()}
+          {:ok, n} -> {:noreply, socket |> put_flash(:info, "#{n} contacts generated") |> load()}
           {:error, reason} -> {:noreply, put_flash(socket, :error, reason)}
         end
 
       :error ->
-        {:noreply, put_flash(socket, :error, "quantidade inválida")}
+        {:noreply, put_flash(socket, :error, "invalid count")}
     end
   end
 
@@ -45,7 +45,7 @@ defmodule WhelxWeb.ContactsLive do
          {:ok, _} <- Contacts.update_contact(contact, params) do
       {:noreply, load(socket)}
     else
-      _ -> {:noreply, put_flash(socket, :error, "não foi possível salvar")}
+      _ -> {:noreply, put_flash(socket, :error, "could not save")}
     end
   end
 
@@ -68,29 +68,29 @@ defmodule WhelxWeb.ContactsLive do
     ~H"""
     <Layouts.app flash={@flash} active={:contacts}>
       <.page
-        title="Contatos"
-        subtitle="Usuários fake do WhatsApp. O comportamento define como a Meta fake responde aos envios."
+        title="Contacts"
+        subtitle="Fake WhatsApp users. Their behavior decides how the emulated Meta responds to sends."
       >
         <div class="mb-4 grid gap-4 md:grid-cols-2">
-          <.panel title="Novo contato">
+          <.panel title="New contact">
             <form id="contact-form" phx-submit="create" class="grid grid-cols-2 gap-2">
               <input
                 name="contact[profile_name]"
-                placeholder="Nome (gerado se vazio)"
+                placeholder="Name (generated if empty)"
                 class={input_class()}
               />
               <input
                 name="contact[wa_id]"
-                placeholder="5511999990000 (gerado se vazio)"
+                placeholder="5511999990000 (generated if empty)"
                 class={input_class()}
               />
               <p :for={err <- Map.get(@errors, :wa_id, [])} class="col-span-2 text-xs text-red-600">
                 wa_id {err}
               </p>
-              <.btn type="submit" variant="primary" class="col-span-2">Criar</.btn>
+              <.btn type="submit" variant="primary" class="col-span-2">Create</.btn>
             </form>
           </.panel>
-          <.panel title="Gerar em lote (campanhas)">
+          <.panel title="Bulk generate (campaigns)">
             <form id="bulk-form" phx-submit="bulk" class="flex gap-2">
               <input
                 type="number"
@@ -100,9 +100,9 @@ defmodule WhelxWeb.ContactsLive do
                 max="10000"
                 class={input_class()}
               />
-              <.btn type="submit">Gerar</.btn>
+              <.btn type="submit">Generate</.btn>
             </form>
-            <p class="mt-2 text-xs text-base-content/60">{length(@contacts)} contatos no total.</p>
+            <p class="mt-2 text-xs text-base-content/60">{length(@contacts)} contacts in total.</p>
           </.panel>
         </div>
 
@@ -110,10 +110,10 @@ defmodule WhelxWeb.ContactsLive do
           <table class="w-full text-sm">
             <thead class="text-left text-xs uppercase text-base-content/60">
               <tr>
-                <th class="py-2">Contato</th>
-                <th>Comportamento</th>
-                <th>Leitura</th>
-                <th>Presença</th>
+                <th class="py-2">Contact</th>
+                <th>Behavior</th>
+                <th>Read receipts</th>
+                <th>Presence</th>
                 <th></th>
               </tr>
             </thead>
@@ -133,8 +133,8 @@ defmodule WhelxWeb.ContactsLive do
                       {Phoenix.HTML.Form.options_for_select(
                         [
                           {"normal", "normal"},
-                          {"número inválido (131026)", "invalid_number"},
-                          {"bloqueou o business (131026)", "blocked"}
+                          {"invalid number (131026)", "invalid_number"},
+                          {"blocked the business (131026)", "blocked"}
                         ],
                         c.behavior
                       )}
@@ -142,9 +142,9 @@ defmodule WhelxWeb.ContactsLive do
                     <select name="edit[read_policy]" class={input_class()}>
                       {Phoenix.HTML.Form.options_for_select(
                         [
-                          {"lê ao abrir", "on_open"},
-                          {"lê automático", "auto"},
-                          {"nunca lê", "never"}
+                          {"reads on open", "on_open"},
+                          {"reads automatically", "auto"},
+                          {"never reads", "never"}
                         ],
                         c.read_policy
                       )}
@@ -167,7 +167,7 @@ defmodule WhelxWeb.ContactsLive do
             </tbody>
           </table>
           <p :if={@contacts == []} class="py-6 text-center text-sm text-base-content/60">
-            Nenhum contato ainda.
+            No contacts yet.
           </p>
         </.panel>
       </.page>

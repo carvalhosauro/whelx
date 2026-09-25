@@ -19,7 +19,7 @@ defmodule Whelx.ReviewFixesTest do
       {:ok, _} = Accounts.upsert_app(%{webhook_url: ""})
       assert :ok = Webhooks.attempt(d, 1)
 
-      assert %{state: "skipped", last_error: "webhook_url não configurada"} =
+      assert %{state: "skipped", last_error: "webhook_url is not configured"} =
                Webhooks.get_delivery(d.id)
     end
 

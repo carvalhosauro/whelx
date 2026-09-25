@@ -47,7 +47,7 @@ defmodule Whelx.Webhooks do
         insert_pending(base, delay)
 
       Chaos.hit?(profile, :webhook_drop, profile.drop_rate) ->
-        insert_final(Map.put(base, :chaos_tag, "drop"), "dropped", "chaos: evento descartado")
+        insert_final(Map.put(base, :chaos_tag, "drop"), "dropped", "chaos: event dropped")
 
       true ->
         delay = delay + extra_delay(profile)
@@ -115,8 +115,8 @@ defmodule Whelx.Webhooks do
     waba = Accounts.get_waba(waba_id)
 
     cond do
-      is_nil(waba) or not waba.subscribed -> "WABA #{waba_id} sem subscribed_apps"
-      is_nil(callback_url(waba_id, payload)) -> "webhook_url não configurada"
+      is_nil(waba) or not waba.subscribed -> "WABA #{waba_id} has no subscribed_apps"
+      is_nil(callback_url(waba_id, payload)) -> "webhook_url is not configured"
       true -> nil
     end
   end
@@ -269,7 +269,7 @@ defmodule Whelx.Webhooks do
     app = Accounts.get_app!()
 
     if app.webhook_url in [nil, ""],
-      do: {:error, "webhook_url não configurada"},
+      do: {:error, "webhook_url is not configured"},
       else: verify_url(app.webhook_url, app.verify_token)
   end
 

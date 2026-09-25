@@ -22,7 +22,7 @@ defmodule Whelx.Mcp do
          "version" => to_string(Application.spec(:whelx, :vsn))
        },
        "instructions" =>
-         "whelx emula a WhatsApp Cloud API. Use send_as_contact para simular clientes, wait_for para aguardar respostas do bot e list_webhook_deliveries para inspecionar o que foi entregue."
+         "whelx emulates the WhatsApp Cloud API. Use send_as_contact to simulate customers, wait_for to wait for bot replies and list_webhook_deliveries to inspect what was delivered."
      }}
   end
 

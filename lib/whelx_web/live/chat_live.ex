@@ -310,16 +310,16 @@ defmodule WhelxWeb.ChatLive do
       minutes = DateTime.diff(conversation.window_expires_at, now, :minute)
 
       {:open,
-       "Janela aberta · fecha em #{div(minutes, 60)}h#{String.pad_leading("#{rem(minutes, 60)}", 2, "0")}"}
+       "Window open · closes in #{div(minutes, 60)}h#{String.pad_leading("#{rem(minutes, 60)}", 2, "0")}"}
     else
-      {:closed, "Janela fechada · só template"}
+      {:closed, "Window closed · templates only"}
     end
   end
 
   defp typing?(%{typing_until: %DateTime{} = until}, now), do: DateTime.after?(until, now)
   defp typing?(_conversation, _now), do: false
 
-  defp preview(nil), do: "sem mensagens"
+  defp preview(nil), do: "no messages"
 
   defp preview(%{type: "text"} = m),
     do: arrow(m) <> (Whelx.Messaging.Message.content(m)["body"] || "")
@@ -339,19 +339,19 @@ defmodule WhelxWeb.ChatLive do
       <div class="flex h-screen">
         <aside class="flex w-72 shrink-0 flex-col border-r border-base-300 bg-base-100">
           <div class="space-y-2 border-b border-base-300 p-3">
-            <form phx-change="select_phone">
+            <form id="phone-select" phx-change="select_phone">
               <select name="phone" class={input_class()} disabled={@phones == []}>
-                <option :if={@phones == []}>Nenhum número — veja Config</option>
+                <option :if={@phones == []}>No phone numbers — see Config</option>
                 <option :for={p <- @phones} value={p.id} selected={@phone && p.id == @phone.id}>
                   {p.verified_name} · {p.display_phone_number}
                 </option>
               </select>
             </form>
-            <form phx-change="search" onsubmit="return false">
+            <form id="contact-search" phx-change="search" onsubmit="return false">
               <input
                 name="q"
                 value={@search}
-                placeholder="Buscar contato"
+                placeholder="Search contacts"
                 phx-debounce="200"
                 class={input_class()}
               />
@@ -388,8 +388,8 @@ defmodule WhelxWeb.ChatLive do
               </div>
             </.link>
             <div :if={@rows == []} class="p-6 text-center text-sm text-base-content/60">
-              Nenhum contato.
-              <.link navigate={~p"/contacts"} class="text-emerald-600 underline">Criar contatos</.link>
+              No contacts yet.
+              <.link navigate={~p"/contacts"} class="text-emerald-600 underline">Create contacts</.link>
             </div>
           </div>
         </aside>
@@ -404,7 +404,7 @@ defmodule WhelxWeb.ChatLive do
                   <span
                     :if={typing?(@conversation, @now)}
                     class="ml-2 font-sans italic text-emerald-600"
-                  >digitando…</span>
+                  >typing…</span>
                 </p>
               </div>
               <% {state, label} = window_label(@conversation, @now) %>
@@ -414,9 +414,9 @@ defmodule WhelxWeb.ChatLive do
               </.badge>
               <div class="ml-auto flex gap-1">
                 <.btn variant="ghost" phx-click="toggle_online">
-                  {if @conversation.contact.online, do: "Ficar offline", else: "Ficar online"}
+                  {if @conversation.contact.online, do: "Go offline", else: "Go online"}
                 </.btn>
-                <.btn variant="ghost" phx-click="expire_window">Vencer janela</.btn>
+                <.btn variant="ghost" phx-click="expire_window">Expire window</.btn>
               </div>
             </header>
 
@@ -432,7 +432,7 @@ defmodule WhelxWeb.ChatLive do
                   selected={@inspected && @inspected.id == m.id}
                 />
                 <p :if={@messages == []} class="mt-10 text-center text-sm text-base-content/60">
-                  Nenhuma mensagem. Mande um "oi" para abrir a janela de 24h.
+                  No messages yet. Send a "hi" to open the 24h window.
                 </p>
               </div>
 
@@ -441,7 +441,7 @@ defmodule WhelxWeb.ChatLive do
                 class="w-96 shrink-0 overflow-y-auto border-l border-base-300 bg-base-100 p-4"
               >
                 <div class="mb-3 flex items-center justify-between">
-                  <h3 class="text-sm font-semibold">Mensagem</h3>
+                  <h3 class="text-sm font-semibold">Message</h3>
                   <button phx-click="close_inspect" class="rounded p-1 hover:bg-base-200"><.icon
                     name="hero-x-mark"
                     class="size-4"
@@ -456,7 +456,7 @@ defmodule WhelxWeb.ChatLive do
                     <span>{d.kind}</span>
                     <span :if={d.last_status} class="font-mono">HTTP {d.last_status}</span>
                     <span :if={d.chaos_tag} class="text-amber-600">{d.chaos_tag}</span>
-                    <span class="ml-auto opacity-60">#{d.id} · {d.attempts} tentativa(s)</span>
+                    <span class="ml-auto opacity-60">#{d.id} · {d.attempts} attempt(s)</span>
                   </div>
                   <p :if={d.last_error} class="mb-1 text-xs text-red-600">{d.last_error}</p>
                   <.json_block data={d.payload} class="max-h-60" />
@@ -469,7 +469,7 @@ defmodule WhelxWeb.ChatLive do
                 <details class="relative">
                   <summary
                     class="grid size-9 cursor-pointer list-none place-items-center rounded-full hover:bg-base-200"
-                    title="Anexar"
+                    title="Attach"
                   >
                     <.icon name="hero-paper-clip" class="size-5" />
                   </summary>
@@ -480,20 +480,20 @@ defmodule WhelxWeb.ChatLive do
                       phx-change="validate_upload"
                       class="space-y-2"
                     >
-                      <p class="text-xs font-semibold uppercase text-base-content/60">Arquivo</p>
+                      <p class="text-xs font-semibold uppercase text-base-content/60">File</p>
                       <.live_file_input upload={@uploads.media} class="block w-full text-xs" />
-                      <input name="caption" placeholder="Legenda (opcional)" class={input_class()} />
+                      <input name="caption" placeholder="Caption (optional)" class={input_class()} />
                       <p :for={entry <- @uploads.media.entries} class="text-xs">
                         {entry.client_name} · {entry.progress}%
                         <span :for={err <- upload_errors(@uploads.media, entry)} class="text-red-600">{inspect(
                           err
                         )}</span>
                       </p>
-                      <.btn type="submit" class="w-full">Enviar arquivo</.btn>
+                      <.btn type="submit" class="w-full">Send file</.btn>
                     </form>
                     <form id="location-form" phx-submit="send_location" class="grid grid-cols-2 gap-2">
                       <p class="col-span-2 text-xs font-semibold uppercase text-base-content/60">
-                        Localização
+                        Location
                       </p>
                       <input
                         name="loc[latitude]"
@@ -509,15 +509,15 @@ defmodule WhelxWeb.ChatLive do
                       />
                       <input
                         name="loc[name]"
-                        placeholder="Nome"
+                        placeholder="Name"
                         class={"col-span-2 " <> input_class()}
                       />
                       <input
                         name="loc[address]"
-                        placeholder="Endereço"
+                        placeholder="Address"
                         class={"col-span-2 " <> input_class()}
                       />
-                      <.btn type="submit" class="col-span-2">Enviar localização</.btn>
+                      <.btn type="submit" class="col-span-2">Send location</.btn>
                     </form>
                   </div>
                 </details>
@@ -526,14 +526,14 @@ defmodule WhelxWeb.ChatLive do
                   <input
                     name="msg[text]"
                     value={@form[:text].value}
-                    placeholder="Mensagem como cliente"
+                    placeholder="Message as the customer"
                     autocomplete="off"
                     class="min-h-9 flex-1 rounded-full border border-base-300 bg-base-200 px-4 py-2 text-sm outline-none focus:border-emerald-500"
                   />
                   <button
                     type="submit"
                     class="grid size-9 place-items-center rounded-full bg-emerald-600 text-white hover:bg-emerald-700"
-                    title="Enviar"
+                    title="Send"
                   >
                     <.icon name="hero-paper-airplane" class="size-5" />
                   </button>
@@ -544,7 +544,7 @@ defmodule WhelxWeb.ChatLive do
                   type="button"
                   phx-hook=".AudioRecorder"
                   class="grid size-9 place-items-center rounded-full hover:bg-base-200 data-[recording]:animate-pulse data-[recording]:bg-red-500 data-[recording]:text-white"
-                  title="Segure para gravar áudio"
+                  title="Hold to record audio"
                 >
                   <.icon name="hero-microphone" class="size-5" />
                 </button>
@@ -553,9 +553,9 @@ defmodule WhelxWeb.ChatLive do
           <% else %>
             <div class="grid flex-1 place-items-center p-8 text-center">
               <div>
-                <p class="text-lg font-semibold">Escolha um contato</p>
+                <p class="text-lg font-semibold">Pick a contact</p>
                 <p class="mt-1 text-sm text-base-content/60">
-                  Você conversa como o cliente. As respostas chegam da sua aplicação pela Graph API fake.
+                  You chat as the customer. Replies come from your application through the emulated Graph API.
                 </p>
               </div>
             </div>
@@ -597,7 +597,7 @@ defmodule WhelxWeb.ChatLive do
                 this.recorder.start()
                 this.el.dataset.recording = ""
               } catch (err) {
-                alert("Não foi possível gravar áudio: " + err.message)
+                alert("Could not record audio: " + err.message)
               }
             }
             const stop = () => this.recorder && this.recorder.state === "recording" && this.recorder.stop()

@@ -3,12 +3,12 @@ defmodule WhelxWeb.CampaignsLive do
   import WhelxWeb.UI
   alias Whelx.{Logs, Messaging}
 
-  @windows [{"5 min", 300}, {"1 hora", 3600}, {"24 horas", 86_400}]
+  @windows [{"5 min", 300}, {"1 hour", 3600}, {"24 hours", 86_400}]
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket), do: :timer.send_interval(2_000, :tick)
-    {:ok, socket |> assign(page_title: "Campanhas", window: 3600, windows: @windows) |> load()}
+    {:ok, socket |> assign(page_title: "Campaigns", window: 3600, windows: @windows) |> load()}
   end
 
   defp load(socket) do
@@ -43,9 +43,9 @@ defmodule WhelxWeb.CampaignsLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} active={:campaigns}>
-      <.page title="Campanhas" subtitle="Envios de template agrupados por nome. Atualiza a cada 2 s.">
+      <.page title="Campaigns" subtitle="Template sends grouped by name. Refreshes every 2 s.">
         <:actions>
-          <form phx-change="window">
+          <form id="campaign-window" phx-change="window">
             <select name="window" class={input_class()}>
               {Phoenix.HTML.Form.options_for_select(
                 Enum.map(@windows, fn {l, v} -> {l, v} end),
@@ -57,11 +57,11 @@ defmodule WhelxWeb.CampaignsLive do
 
         <div class="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
           <.panel>
-            <p class="text-xs uppercase text-base-content/60">Templates enviados</p>
+            <p class="text-xs uppercase text-base-content/60">Templates sent</p>
             <p class="text-2xl font-bold">{Enum.sum(Enum.map(@stats, & &1.total))}</p>
           </.panel>
           <.panel>
-            <p class="text-xs uppercase text-base-content/60">Falhas</p>
+            <p class="text-xs uppercase text-base-content/60">Failures</p>
             <p class="text-2xl font-bold text-red-600">{Enum.sum(Enum.map(@stats, & &1.failed))}</p>
           </.panel>
           <.panel>
@@ -69,7 +69,7 @@ defmodule WhelxWeb.CampaignsLive do
             <p class="text-2xl font-bold text-amber-600">{@rate_limited}</p>
           </.panel>
           <.panel>
-            <p class="text-xs uppercase text-base-content/60">Templates distintos</p>
+            <p class="text-xs uppercase text-base-content/60">Distinct templates</p>
             <p class="text-2xl font-bold">{length(@stats)}</p>
           </.panel>
         </div>
@@ -107,7 +107,7 @@ defmodule WhelxWeb.CampaignsLive do
             </tbody>
           </table>
           <p :if={@stats == []} class="py-6 text-center text-sm text-base-content/60">
-            Nenhum envio de template nessa janela. Dispare uma campanha pela sua aplicação.
+            No template sends in this window. Fire a campaign from your application.
           </p>
         </.panel>
       </.page>

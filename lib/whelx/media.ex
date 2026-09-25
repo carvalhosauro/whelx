@@ -66,11 +66,11 @@ defmodule Whelx.Media do
         {:error, Error.unknown_object("post", session_id)}
 
       %UploadSession{offset: expected} when offset != expected ->
-        {:error, Error.invalid_parameter("file_offset esperado #{expected}, recebido #{offset}")}
+        {:error, Error.invalid_parameter("file_offset expected #{expected}, got #{offset}")}
 
       %UploadSession{} = session when session.offset + byte_size(binary) > session.file_length ->
         {:error,
-         Error.invalid_parameter("upload excede file_length (#{session.file_length} bytes)")}
+         Error.invalid_parameter("upload exceeds file_length (#{session.file_length} bytes)")}
 
       %UploadSession{} = session ->
         path = upload_path(session)
@@ -129,10 +129,10 @@ defmodule Whelx.Media do
         {:ok, int}
 
       _ ->
-        {:error, Error.invalid_parameter("#{field} é obrigatório e deve ser um inteiro positivo")}
+        {:error, Error.invalid_parameter("#{field} is required and must be a positive integer")}
     end
   end
 
   defp present(value, _field) when is_binary(value) and value != "", do: {:ok, value}
-  defp present(_value, field), do: {:error, Error.invalid_parameter("#{field} é obrigatório")}
+  defp present(_value, field), do: {:error, Error.invalid_parameter("#{field} is required")}
 end

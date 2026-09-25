@@ -48,7 +48,7 @@ defmodule Whelx.Graph.ValidationTest do
     end
 
     test "flags known but unsupported types as whelx gaps" do
-      assert {:error, %Error{code: 100, user_msg: "whelx: não suportado" <> _}} =
+      assert {:error, %Error{code: 100, user_msg: "whelx: not supported" <> _}} =
                Validation.validate_send(msg("image", %{"link" => "http://x"}))
     end
 
@@ -141,7 +141,7 @@ defmodule Whelx.Graph.ValidationTest do
                    put_in(base, ["action", "buttons"], Enum.map(1..4, &button/1))
                  )
                )
-             ) =~ "1 a 3"
+             ) =~ "1 to 3"
 
       long =
         put_in(base, ["action", "buttons"], [
@@ -150,7 +150,7 @@ defmodule Whelx.Graph.ValidationTest do
 
       assert user_msg(Validation.validate_send(msg("interactive", long))) =~ "20"
       dup = put_in(base, ["action", "buttons"], [button(1), button(1)])
-      assert user_msg(Validation.validate_send(msg("interactive", dup))) =~ "duplicados"
+      assert user_msg(Validation.validate_send(msg("interactive", dup))) =~ "duplicate ids"
     end
 
     test "list: sections and row limits" do
@@ -174,7 +174,7 @@ defmodule Whelx.Graph.ValidationTest do
                    put_in(base, ["action", "sections"], [%{"title" => "A", "rows" => rows.(11)}])
                  )
                )
-             ) =~ "linhas"
+             ) =~ "total rows"
 
       long_row =
         put_in(base, ["action", "sections"], [
@@ -338,7 +338,7 @@ defmodule Whelx.Graph.ValidationTest do
     end
 
     test "unknown interactive types are whelx gaps" do
-      assert {:error, %Error{user_msg: "whelx: não suportado" <> _}} =
+      assert {:error, %Error{user_msg: "whelx: not supported" <> _}} =
                Validation.validate_send(
                  msg("interactive", %{"type" => "flow", "body" => %{"text" => "x"}})
                )
@@ -401,7 +401,7 @@ defmodule Whelx.Graph.ValidationTest do
           ]
         })
 
-      assert user_msg(Validation.validate_template_definition(gap)) =~ "sequenciais"
+      assert user_msg(Validation.validate_template_definition(gap)) =~ "sequential"
     end
 
     test "media header requires header_handle and buttons are validated" do
@@ -439,7 +439,7 @@ defmodule Whelx.Graph.ValidationTest do
                Validation.validate_template_definition(
                  tpl(%{"components" => tpl()["components"] ++ [bad]})
                )
-             ) =~ "botão"
+             ) =~ "invalid button type"
     end
   end
 end

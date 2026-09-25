@@ -51,7 +51,7 @@ defmodule WhelxWeb.Graph.ObjectController do
       {:error, _} = error -> error
     end
   rescue
-    ArgumentError -> {:error, Error.invalid_parameter("file_offset inválido")}
+    ArgumentError -> {:error, Error.invalid_parameter("file_offset is invalid")}
   end
 
   def create(conn, %{"id" => id}) do
@@ -83,7 +83,7 @@ defmodule WhelxWeb.Graph.ObjectController do
   defp webhook_configuration_param(%{"webhook_configuration" => %{} = config}), do: {:ok, config}
 
   defp webhook_configuration_param(_params),
-    do: {:error, Error.unsupported("POST /{phone_number_id} sem webhook_configuration")}
+    do: {:error, Error.unsupported("POST /{phone_number_id} without webhook_configuration")}
 
   defp webhook_configuration(phone) do
     waba = Whelx.Accounts.get_waba(phone.waba_id)

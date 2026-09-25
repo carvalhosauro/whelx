@@ -14,7 +14,7 @@ defmodule WhelxWeb.Plugs.LocalOnly do
   @impl true
   def call(conn, _opts) do
     cond do
-      foreign_origin?(conn) -> reject(conn, 403, "origin não permitida")
+      foreign_origin?(conn) -> reject(conn, 403, "origin not allowed")
       form_body?(conn) -> reject(conn, 415, "use content-type: application/json")
       true -> conn
     end

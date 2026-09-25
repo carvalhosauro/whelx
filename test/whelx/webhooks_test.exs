@@ -105,7 +105,7 @@ defmodule Whelx.WebhooksTest do
     assert {:ok, %{ok: false, status: 200}} = Webhooks.verify()
 
     {:ok, _} = Accounts.upsert_app(%{webhook_url: nil})
-    assert {:error, "webhook_url não configurada"} = Webhooks.verify()
+    assert {:error, "webhook_url is not configured"} = Webhooks.verify()
   end
 
   test "redeliver/1 creates a new delivery with the same payload", %{waba: waba} do

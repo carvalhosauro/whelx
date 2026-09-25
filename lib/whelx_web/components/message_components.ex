@@ -37,7 +37,7 @@ defmodule WhelxWeb.MessageComponents do
             :if={@message.context_wamid && @message.type != "reaction"}
             class="mb-1 truncate rounded border-l-4 border-emerald-500 bg-black/5 px-2 py-1 text-xs opacity-70"
           >
-            ↩ resposta a {String.slice(@message.context_wamid, 0, 18)}…
+            ↩ reply to {String.slice(@message.context_wamid, 0, 18)}…
           </div>
           <.body type={@message.type} content={@content} message={@message} />
           <div class="mt-1 flex items-center justify-end gap-1.5 text-[10px] opacity-60">
@@ -164,7 +164,7 @@ defmodule WhelxWeb.MessageComponents do
     ~H"""
     <p class="whitespace-pre-wrap break-words">{get_in(@content, ["body", "text"])}</p>
     <div class="mt-2 min-w-60 rounded-lg bg-black/5 p-2 text-xs">
-      <p class="mb-1 font-semibold">Pedido {@params["reference_id"]}</p>
+      <p class="mb-1 font-semibold">Order {@params["reference_id"]}</p>
       <div :for={item <- @order["items"] || []} class="flex justify-between gap-2">
         <span>{item["quantity"]}× {item["name"]}</span>
         <span>{money(item["sale_amount"] || item["amount"])}</span>
@@ -193,7 +193,7 @@ defmodule WhelxWeb.MessageComponents do
       phx-click={JS.dispatch("whelx:copy", detail: %{text: @pix["code"]})}
       class="mt-2 w-full rounded-lg bg-emerald-600 py-1.5 text-center text-xs font-semibold text-white hover:bg-emerald-700"
     >
-      Copiar código Pix
+      Copy Pix code
     </button>
     """
   end
@@ -246,7 +246,7 @@ defmodule WhelxWeb.MessageComponents do
     <img
       src={~p"/ui/media/#{@content["id"]}"}
       class="max-h-64 rounded-lg"
-      alt={@content["caption"] || "imagem"}
+      alt={@content["caption"] || "image"}
     />
     <p :if={@content["caption"]} class="mt-1">{@content["caption"]}</p>
     """
@@ -256,7 +256,7 @@ defmodule WhelxWeb.MessageComponents do
     ~H"""
     <audio controls src={~p"/ui/media/#{@content["id"]}"} class="h-10 max-w-full"></audio>
     <p class="text-[10px] opacity-60">
-      {if @content["voice"], do: "🎤 mensagem de voz", else: "áudio"} · {@content["mime_type"]}
+      {if @content["voice"], do: "🎤 voice message", else: "audio"} · {@content["mime_type"]}
     </p>
     """
   end
@@ -285,7 +285,7 @@ defmodule WhelxWeb.MessageComponents do
     >
       <span class="flex items-center gap-1 font-medium"><.icon name="hero-map-pin" class="size-4" /> {@content[
         "name"
-      ] || "Localização"}</span>
+      ] || "Location"}</span>
       <span class="block text-xs opacity-70">{@content["address"]}</span>
       <span class="block font-mono text-[10px] opacity-60">{@content["latitude"]}, {@content[
         "longitude"
@@ -297,7 +297,7 @@ defmodule WhelxWeb.MessageComponents do
   defp body(%{type: "reaction"} = assigns) do
     ~H"""
     <p>
-      reagiu {@content["emoji"] || "(removida)"} a {String.slice(@content["message_id"] || "", 0, 18)}…
+      reacted {@content["emoji"] || "(removed)"} to {String.slice(@content["message_id"] || "", 0, 18)}…
     </p>
     """
   end

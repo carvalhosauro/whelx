@@ -91,8 +91,8 @@ defmodule Whelx.Graph.Error do
 
   @spec unsupported(String.t()) :: t()
   def unsupported(what) do
-    invalid_parameter("whelx: não suportado (#{what})",
-      message: "(#100) whelx: não suportado: #{what}"
+    invalid_parameter("whelx: not supported (#{what})",
+      message: "(#100) whelx: not supported: #{what}"
     )
   end
 

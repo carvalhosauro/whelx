@@ -46,18 +46,18 @@ defmodule WhelxWeb.Layouts do
           Chat
         </.nav_item>
         <.nav_item navigate={~p"/contacts"} icon="hero-users" active={@active == :contacts}>
-          Contatos
+          Contacts
         </.nav_item>
         <.nav_item navigate={~p"/templates"} icon="hero-document-text" active={@active == :templates}>
           Templates
         </.nav_item>
         <.nav_item navigate={~p"/campaigns"} icon="hero-megaphone" active={@active == :campaigns}>
-          Campanhas
+          Campaigns
         </.nav_item>
         <.nav_item navigate={~p"/logs"} icon="hero-queue-list" active={@active == :logs}>
           Logs
         </.nav_item>
-        <.nav_item navigate={~p"/chaos"} icon="hero-bolt" active={@active == :chaos}>Caos</.nav_item>
+        <.nav_item navigate={~p"/chaos"} icon="hero-bolt" active={@active == :chaos}>Chaos</.nav_item>
         <.nav_item navigate={~p"/config"} icon="hero-cog-6-tooth" active={@active == :config}>
           Config
         </.nav_item>

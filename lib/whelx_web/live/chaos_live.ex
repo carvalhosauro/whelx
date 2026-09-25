@@ -4,18 +4,18 @@ defmodule WhelxWeb.ChaosLive do
   alias Whelx.{Chaos, Control}
 
   @rates [
-    {:sync_error_rate, "Erro síncrono na Graph API",
-     "130429 em /messages, 131000, HTTP 500, 503"},
-    {:async_fail_rate, "Falha assíncrona (status failed)", "códigos async_fail_codes"},
-    {:reorder_rate, "Reordenar status", "entrega um status 2 s depois do próximo"},
-    {:duplicate_rate, "Duplicar webhook", "testa idempotência por wamid"},
-    {:drop_rate, "Perder webhook", "evento nunca é entregue"},
-    {:batch_rate, "Agrupar status", "vários statuses num POST só"}
+    {:sync_error_rate, "Synchronous Graph API error",
+     "130429 on /messages, 131000, HTTP 500, 503"},
+    {:async_fail_rate, "Asynchronous failure (failed status)", "async_fail_codes codes"},
+    {:reorder_rate, "Reorder statuses", "delivers a status 2 s after the next one"},
+    {:duplicate_rate, "Duplicate webhook", "tests idempotency by wamid"},
+    {:drop_rate, "Drop webhook", "event is never delivered"},
+    {:batch_rate, "Batch statuses", "several statuses in a single POST"}
   ]
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, socket |> assign(page_title: "Caos", rates: @rates) |> load()}
+    {:ok, socket |> assign(page_title: "Chaos", rates: @rates) |> load()}
   end
 
   defp load(socket), do: assign(socket, profile: Chaos.get_profile())
@@ -23,7 +23,7 @@ defmodule WhelxWeb.ChaosLive do
   @impl true
   def handle_event("preset", %{"name" => name}, socket) do
     {:ok, _} = Chaos.apply_preset(name)
-    {:noreply, socket |> put_flash(:info, "Preset #{name} aplicado") |> load()}
+    {:noreply, socket |> put_flash(:info, "Preset #{name} applied") |> load()}
   end
 
   def handle_event("save", %{"chaos" => params}, socket) do
@@ -38,11 +38,12 @@ defmodule WhelxWeb.ChaosLive do
       |> Map.put("preset", "custom")
 
     case Chaos.update_profile(params) do
-      {:ok, _} -> {:noreply, socket |> put_flash(:info, "Caos salvo") |> load()}
+      {:ok, _} -> {:noreply, socket |> put_flash(:info, "Chaos saved") |> load()}
       {:error, cs} -> {:noreply, put_flash(socket, :error, inspect(Control.changeset_errors(cs)))}
     end
   rescue
-    ArgumentError -> {:noreply, put_flash(socket, :error, "async_fail_codes deve conter números")}
+    ArgumentError ->
+      {:noreply, put_flash(socket, :error, "async_fail_codes must contain numbers")}
   end
 
   defp split_list(value), do: value |> String.split([",", " "], trim: true)
@@ -52,8 +53,8 @@ defmodule WhelxWeb.ChaosLive do
     ~H"""
     <Layouts.app flash={@flash} active={:chaos}>
       <.page
-        title="Caos"
-        subtitle="Falhas determinísticas por seed: mesma seed + mesma sequência = mesmo resultado."
+        title="Chaos"
+        subtitle="Deterministic, seeded failures: same seed + same sequence = same outcome."
       >
         <:actions>
           <.btn
@@ -74,7 +75,7 @@ defmodule WhelxWeb.ChaosLive do
                 <input type="number" name="chaos[seed]" value={@profile.seed} class={input_class()} />
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Latência mínima (ms)</span>
+                <span class="mb-1 block text-base-content/70">Min latency (ms)</span>
                 <input
                   type="number"
                   name="chaos[latency_min_ms]"
@@ -83,7 +84,7 @@ defmodule WhelxWeb.ChaosLive do
                 />
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Latência máxima (ms)</span>
+                <span class="mb-1 block text-base-content/70">Max latency (ms)</span>
                 <input
                   type="number"
                   name="chaos[latency_max_ms]"
@@ -117,7 +118,7 @@ defmodule WhelxWeb.ChaosLive do
 
             <div class="grid gap-3 md:grid-cols-3">
               <label>
-                <span class="mb-1 block text-base-content/70">Códigos síncronos</span>
+                <span class="mb-1 block text-base-content/70">Sync error codes</span>
                 <input
                   name="chaos[sync_error_codes]"
                   value={Enum.join(@profile.sync_error_codes, ", ")}
@@ -125,7 +126,7 @@ defmodule WhelxWeb.ChaosLive do
                 />
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Códigos assíncronos</span>
+                <span class="mb-1 block text-base-content/70">Async failure codes</span>
                 <input
                   name="chaos[async_fail_codes]"
                   value={Enum.join(@profile.async_fail_codes, ", ")}
@@ -133,16 +134,16 @@ defmodule WhelxWeb.ChaosLive do
                 />
               </label>
               <label class="md:col-span-3">
-                <span class="mb-1 block text-base-content/70">Só nestes phone_number_ids (vazio = todos)</span>
+                <span class="mb-1 block text-base-content/70">Only these phone_number_ids (empty = all)</span>
                 <input
                   name="chaos[phone_number_ids]"
                   value={Enum.join(@profile.phone_number_ids || [], ", ")}
-                  placeholder="ex.: 219000000009101"
+                  placeholder="e.g. 219000000009101"
                   class={input_class()}
                 />
               </label>
               <label>
-                <span class="mb-1 block text-base-content/70">Atraso extra de webhook (ms)</span>
+                <span class="mb-1 block text-base-content/70">Extra webhook delay (ms)</span>
                 <input
                   type="number"
                   name="chaos[webhook_extra_delay_ms]"
@@ -152,7 +153,7 @@ defmodule WhelxWeb.ChaosLive do
               </label>
             </div>
 
-            <.btn type="submit" variant="primary">Salvar</.btn>
+            <.btn type="submit" variant="primary">Save</.btn>
           </form>
         </.panel>
       </.page>
