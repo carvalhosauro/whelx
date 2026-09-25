@@ -141,11 +141,15 @@ defmodule Whelx.Accounts do
   # Settings
 
   def get_settings do
-    Repo.one(from s in Settings, order_by: [asc: s.id], limit: 1) || Repo.insert!(%Settings{})
+    Whelx.Cache.fetch(:settings, fn ->
+      Repo.one(from s in Settings, order_by: [asc: s.id], limit: 1) || Repo.insert!(%Settings{})
+    end)
   end
 
   def update_settings(attrs) do
-    get_settings() |> Settings.changeset(Attrs.stringify(attrs)) |> Repo.update() |> notify()
+    result = get_settings() |> Settings.changeset(Attrs.stringify(attrs)) |> Repo.update()
+    Whelx.Cache.invalidate(:settings)
+    notify(result)
   end
 
   # Bootstrap

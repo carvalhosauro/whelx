@@ -14,6 +14,18 @@ defmodule Whelx.Logs do
     end
   end
 
+  @doc "Logs off the request path when `:async_request_log` is enabled (dev/prod)."
+  def log_request_async(attrs) do
+    if Application.get_env(:whelx, :async_request_log, false) do
+      {:ok, _pid} =
+        Task.Supervisor.start_child(Whelx.TaskSupervisor, fn -> log_request(attrs) end)
+    else
+      {:ok, _request} = log_request(attrs)
+    end
+
+    :ok
+  end
+
   def list_requests(opts \\ []) do
     limit = Keyword.get(opts, :limit, 100)
 

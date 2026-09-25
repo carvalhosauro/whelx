@@ -57,6 +57,19 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# SQLite: a single connection serializes all access in Elixir. Multiple
+# connections make SQLite busy-wait inside the NIF on dirty IO schedulers;
+# with the pool as large as the scheduler count the lock holder starves until
+# the waiters hit busy_timeout. Every whelx query is sub-millisecond, so one
+# connection comfortably handles campaign bursts.
+config :whelx, Whelx.Repo,
+  pool_size: 1,
+  default_transaction_mode: :immediate,
+  busy_timeout: 5_000,
+  journal_mode: :wal,
+  queue_target: 2_000,
+  queue_interval: 10_000
+
 config :whelx, Oban,
   engine: Oban.Engines.Lite,
   repo: Whelx.Repo,
@@ -68,7 +81,8 @@ config :whelx,
   data_dir: Path.expand("../data", __DIR__),
   public_url: "http://localhost:4000",
   bootstrap: true,
-  webhook_req_options: []
+  webhook_req_options: [],
+  async_request_log: true
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

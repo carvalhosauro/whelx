@@ -33,6 +33,7 @@ defmodule WhelxWeb.ConnCase do
   end
 
   setup tags do
+    Whelx.Cache.clear()
     Whelx.DataCase.setup_sandbox(tags)
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end

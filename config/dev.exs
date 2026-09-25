@@ -3,7 +3,7 @@ import Config
 # Configure your database
 config :whelx, Whelx.Repo,
   database: Path.expand("../whelx_dev.db", __DIR__),
-  pool_size: 5,
+  pool_size: 1,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
 

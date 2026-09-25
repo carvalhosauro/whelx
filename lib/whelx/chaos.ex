@@ -51,12 +51,16 @@ defmodule Whelx.Chaos do
 
   @spec get_profile() :: Profile.t()
   def get_profile do
-    Repo.one(from p in Profile, order_by: [asc: p.id], limit: 1) || Repo.insert!(%Profile{})
+    Whelx.Cache.fetch(:chaos_profile, fn ->
+      Repo.one(from p in Profile, order_by: [asc: p.id], limit: 1) || Repo.insert!(%Profile{})
+    end)
   end
 
   def update_profile(attrs) do
-    with {:ok, profile} <-
-           get_profile() |> Profile.changeset(Attrs.stringify(attrs)) |> Repo.update() do
+    result = get_profile() |> Profile.changeset(Attrs.stringify(attrs)) |> Repo.update()
+    Whelx.Cache.invalidate(:chaos_profile)
+
+    with {:ok, profile} <- result do
       reset_counters()
       Events.broadcast("config", :chaos_changed)
       {:ok, profile}

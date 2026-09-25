@@ -37,4 +37,5 @@ config :whelx,
   bootstrap: false,
   data_dir: Path.expand("../tmp/test_data", __DIR__),
   public_url: "http://whelx.test",
-  webhook_req_options: [plug: {Req.Test, Whelx.Webhooks.Client}]
+  webhook_req_options: [plug: {Req.Test, Whelx.Webhooks.Client}],
+  async_request_log: false

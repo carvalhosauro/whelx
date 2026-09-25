@@ -29,6 +29,7 @@ defmodule Whelx.DataCase do
   end
 
   setup tags do
+    Whelx.Cache.clear()
     Whelx.DataCase.setup_sandbox(tags)
     :ok
   end

@@ -12,7 +12,7 @@ defmodule WhelxWeb.Plugs.GraphRequestLogger do
     started = System.monotonic_time(:millisecond)
 
     register_before_send(conn, fn conn ->
-      Logs.log_request(%{
+      Logs.log_request_async(%{
         method: conn.method,
         path: conn.request_path,
         query: mask_query(conn.query_string),

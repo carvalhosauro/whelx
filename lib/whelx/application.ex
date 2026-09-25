@@ -16,6 +16,7 @@ defmodule Whelx.Application do
       {DNSCluster, query: Application.get_env(:whelx, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Whelx.PubSub},
       {Oban, Application.fetch_env!(:whelx, Oban)},
+      {Task.Supervisor, name: Whelx.TaskSupervisor},
       Whelx.Chaos.Counter,
       Whelx.Messaging.Throughput,
       # Start to serve requests, typically the last entry
