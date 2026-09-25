@@ -24,6 +24,7 @@ defmodule Whelx.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import Whelx.DataCase
+      use Oban.Testing, repo: Whelx.Repo, engine: Oban.Engines.Lite
     end
   end
 
