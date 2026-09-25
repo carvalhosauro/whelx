@@ -118,6 +118,10 @@ python3 scripts/smoke.py --base http://localhost:4000   # ponta a ponta, simula 
 
 Feito com Elixir, Phoenix LiveView, SQLite e Oban.
 
+## Licença
+
+[MIT](LICENSE)
+
 ## Segurança
 
 O whelx é uma ferramenta de teste local. A UI e a API de controle **não têm autenticação** (só rejeitam requisições vindas de outros sites), e a tela de Config mostra o seu app secret. Não exponha a porta em uma rede em que você não confia.

@@ -125,6 +125,10 @@ python3 scripts/smoke.py --base http://localhost:4000   # end-to-end, acts as a 
 
 Built with Elixir, Phoenix LiveView, SQLite and Oban.
 
+## License
+
+[MIT](LICENSE)
+
 ## Security
 
 whelx is a local test tool. The UI and the control API have **no authentication** (they reject cross-site requests), and the Config page shows your app secret. Don't expose the port to a network you don't trust.
