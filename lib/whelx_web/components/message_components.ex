@@ -81,7 +81,9 @@ defmodule WhelxWeb.MessageComponents do
     ~H"""
     <p class="font-medium">{@reply["title"]}</p>
     <p :if={@reply["description"]} class="text-xs opacity-70">{@reply["description"]}</p>
-    <p class="mt-0.5 font-mono text-[10px] opacity-50">{String.replace(@content["type"], "_", " ")} · id {@reply["id"]}</p>
+    <p class="mt-0.5 font-mono text-[10px] opacity-50">
+      {String.replace(@content["type"], "_", " ")} · id {@reply["id"]}
+    </p>
     """
   end
 
