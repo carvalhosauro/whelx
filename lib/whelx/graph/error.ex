@@ -7,7 +7,16 @@ defmodule Whelx.Graph.Error do
   alias Whelx.Ids
 
   @enforce_keys [:code, :message, :status]
-  defstruct [:code, :message, :status, :subcode, :user_title, :user_msg, type: "OAuthException"]
+  defstruct [
+    :code,
+    :message,
+    :status,
+    :subcode,
+    :user_title,
+    :user_msg,
+    :details,
+    type: "OAuthException"
+  ]
 
   @type t :: %__MODULE__{
           code: integer(),
@@ -16,6 +25,7 @@ defmodule Whelx.Graph.Error do
           subcode: integer() | nil,
           user_title: String.t() | nil,
           user_msg: String.t() | nil,
+          details: String.t() | nil,
           type: String.t()
         }
 
@@ -56,7 +66,8 @@ defmodule Whelx.Graph.Error do
       message: Keyword.get(opts, :message, message),
       subcode: opts[:subcode],
       user_title: opts[:user_title],
-      user_msg: opts[:user_msg]
+      user_msg: opts[:user_msg],
+      details: opts[:details]
     }
   end
 
@@ -93,6 +104,7 @@ defmodule Whelx.Graph.Error do
       |> put_present("error_subcode", e.subcode)
       |> put_present("error_user_title", e.user_title)
       |> put_present("error_user_msg", e.user_msg)
+      |> put_present("error_data", error_data(e.details))
 
     %{"error" => error}
   end
@@ -110,6 +122,9 @@ defmodule Whelx.Graph.Error do
       "error_data" => %{"details" => Keyword.get(opts, :details, details)}
     }
   end
+
+  defp error_data(nil), do: nil
+  defp error_data(details), do: %{"messaging_product" => "whatsapp", "details" => details}
 
   defp put_present(map, _key, nil), do: map
   defp put_present(map, key, value), do: Map.put(map, key, value)

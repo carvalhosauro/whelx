@@ -36,6 +36,9 @@ defmodule WhelxWeb.Router do
     get "/:version/:id/phone_numbers", WabaController, :phone_numbers
     post "/:version/:id/subscribed_apps", WabaController, :subscribe
     delete "/:version/:id/subscribed_apps", WabaController, :unsubscribe
+    get "/:version/:id/message_templates", TemplateController, :index
+    post "/:version/:id/message_templates", TemplateController, :create
+    delete "/:version/:id/message_templates", TemplateController, :delete
 
     match :*, "/:version/*rest", ObjectController, :unsupported
   end
