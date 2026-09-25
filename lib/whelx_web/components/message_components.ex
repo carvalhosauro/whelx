@@ -74,6 +74,24 @@ defmodule WhelxWeb.MessageComponents do
     """
   end
 
+  defp body(%{type: "interactive", content: %{"type" => reply_type}} = assigns)
+       when reply_type in ~w(button_reply list_reply) do
+    assigns = assign(assigns, reply: assigns.content[reply_type])
+
+    ~H"""
+    <p class="font-medium">{@reply["title"]}</p>
+    <p :if={@reply["description"]} class="text-xs opacity-70">{@reply["description"]}</p>
+    <p class="mt-0.5 font-mono text-[10px] opacity-50">{String.replace(@content["type"], "_", " ")} · id {@reply["id"]}</p>
+    """
+  end
+
+  defp body(%{type: "button"} = assigns) do
+    ~H"""
+    <p class="font-medium">{@content["text"]}</p>
+    <p class="mt-0.5 font-mono text-[10px] opacity-50">quick reply · payload {@content["payload"]}</p>
+    """
+  end
+
   defp body(%{type: "interactive", content: %{"type" => "button"}} = assigns) do
     ~H"""
     <.interactive_header content={@content} />
@@ -143,7 +161,7 @@ defmodule WhelxWeb.MessageComponents do
 
     ~H"""
     <p class="whitespace-pre-wrap break-words">{get_in(@content, ["body", "text"])}</p>
-    <div class="mt-2 rounded-lg bg-black/5 p-2 text-xs">
+    <div class="mt-2 min-w-60 rounded-lg bg-black/5 p-2 text-xs">
       <p class="mb-1 font-semibold">Pedido {@params["reference_id"]}</p>
       <div :for={item <- @order["items"] || []} class="flex justify-between gap-2">
         <span>{item["quantity"]}× {item["name"]}</span>

@@ -136,7 +136,7 @@ defmodule WhelxWeb.ConfigLive do
       >
         <div class="grid gap-4 lg:grid-cols-2">
           <.panel title="App Meta (fake)">
-            <dl class="mb-4 grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
+            <dl class="mb-4 grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-2 text-sm">
               <dt class="text-base-content/60">App ID</dt>
               <dd class="flex items-center gap-2 font-mono">
                 {@app.id} <.copy_button text={@app.id} />
