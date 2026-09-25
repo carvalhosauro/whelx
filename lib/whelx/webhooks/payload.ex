@@ -55,4 +55,39 @@ defmodule Whelx.Webhooks.Payload do
         })
     end
   end
+
+  @doc "`statuses` webhook for an outbound message (v24+ shape: no `conversation`)."
+  @spec status(Message.t(), PhoneNumber.t(), Contact.t()) :: map()
+  def status(%Message{} = message, %PhoneNumber{} = phone, %Contact{} = contact) do
+    status =
+      %{
+        "id" => message.wamid,
+        "status" => message.status,
+        "timestamp" => Attrs.unix(status_time(message)),
+        "recipient_id" => contact.wa_id
+      }
+      |> put_status_extras(message)
+
+    value = %{
+      "messaging_product" => "whatsapp",
+      "metadata" => metadata(phone),
+      "statuses" => [status]
+    }
+
+    envelope(phone.waba_id, "messages", value)
+  end
+
+  defp put_status_extras(status, %Message{status: "failed", errors: errors}),
+    do: Map.put(status, "errors", errors)
+
+  defp put_status_extras(status, %Message{payload: %{"pricing" => pricing}}) when is_map(pricing),
+    do: Map.put(status, "pricing", pricing)
+
+  defp put_status_extras(status, _message), do: status
+
+  defp status_time(%Message{status: "sent", sent_at: %DateTime{} = t}), do: t
+  defp status_time(%Message{status: "delivered", delivered_at: %DateTime{} = t}), do: t
+  defp status_time(%Message{status: "read", read_at: %DateTime{} = t}), do: t
+  defp status_time(%Message{status: "failed", failed_at: %DateTime{} = t}), do: t
+  defp status_time(%Message{updated_at: t}), do: t
 end

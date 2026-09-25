@@ -5,7 +5,7 @@ defmodule Whelx.Messaging do
   alias Whelx.{Accounts, Contacts, Events, Ids, Repo, Templates, Webhooks}
   alias Whelx.Accounts.PhoneNumber
   alias Whelx.Graph.Error
-  alias Whelx.Messaging.{Conversation, Message, Throughput}
+  alias Whelx.Messaging.{Conversation, Message, StatusLifecycle, Throughput}
   alias Whelx.Webhooks.Payload
 
   @window_hours 24
@@ -140,7 +140,10 @@ defmodule Whelx.Messaging do
               conversation_id: conversation.id,
               direction: "outbound",
               type: request.type,
-              payload: Map.put(extra, "content", request.content),
+              payload:
+                extra
+                |> Map.put("content", request.content)
+                |> Map.put("pricing", pricing(extra["category"], window_open?(conversation))),
               status: "accepted",
               context_wamid: request.context_wamid,
               planned_failure: planned_failure(request, contact, conversation)
@@ -162,8 +165,141 @@ defmodule Whelx.Messaging do
     end
   end
 
-  @doc false
-  def after_accept(_message), do: :ok
+  defp after_accept(message), do: StatusLifecycle.start(message)
+
+  # PMP pricing as reported in status webhooks.
+  defp pricing("service", _window_open?), do: free_pricing("service")
+  defp pricing("utility", true), do: free_pricing("utility")
+
+  defp pricing(category, _window_open?),
+    do: %{
+      "billable" => true,
+      "pricing_model" => "PMP",
+      "type" => "regular",
+      "category" => category
+    }
+
+  defp free_pricing(category),
+    do: %{
+      "billable" => false,
+      "pricing_model" => "PMP",
+      "type" => "free_customer_service",
+      "category" => category
+    }
+
+  # Status transitions
+
+  @rank %{"accepted" => 0, "sent" => 1, "delivered" => 2, "read" => 3}
+
+  @spec allowed_transition?(String.t(), String.t()) :: boolean()
+  def allowed_transition?(from, "failed"), do: from in ~w(accepted sent)
+
+  def allowed_transition?(from, to) do
+    Map.has_key?(@rank, from) and Map.has_key?(@rank, to) and @rank[to] > @rank[from]
+  end
+
+  @doc "Moves an outbound message to `status` and queues its status webhook."
+  def transition(message_id, status, opts \\ []) do
+    case Repo.get(Message, message_id) do
+      nil ->
+        {:skip, :not_found}
+
+      message ->
+        if allowed_transition?(message.status, status),
+          do: do_transition(message, status, opts),
+          else: {:skip, :invalid_transition}
+    end
+  end
+
+  defp do_transition(message, status, opts) do
+    now = DateTime.utc_now()
+
+    changes =
+      [status: status]
+      |> Keyword.put(timestamp_field(status), now)
+      |> then(fn changes ->
+        if status == "failed",
+          do: Keyword.put(changes, :errors, [failure_error(message)]),
+          else: changes
+      end)
+
+    message =
+      message
+      |> Ecto.Changeset.change(changes)
+      |> Repo.update!()
+      |> Repo.preload(conversation: :contact)
+
+    conversation = message.conversation
+    phone = Accounts.get_phone_number!(conversation.phone_number_id)
+
+    {:ok, _} =
+      Webhooks.enqueue(
+        phone.waba_id,
+        "statuses",
+        Payload.status(message, phone, conversation.contact),
+        Keyword.put(opts, :message_wamid, message.wamid)
+      )
+
+    broadcast_message(:message_updated, message)
+    broadcast_conversation(conversation.id)
+    {:ok, message}
+  end
+
+  defp timestamp_field("sent"), do: :sent_at
+  defp timestamp_field("delivered"), do: :delivered_at
+  defp timestamp_field("read"), do: :read_at
+  defp timestamp_field("failed"), do: :failed_at
+
+  defp failure_error(%Message{planned_failure: %{"code" => code} = failure}) do
+    opts = if failure["details"], do: [details: failure["details"]], else: []
+    Error.async(code, opts)
+  end
+
+  defp failure_error(_message), do: Error.async(131_000)
+
+  @doc "The contact opens the chat: clears unread and reads delivered messages (read_policy on_open)."
+  def open_conversation(conversation_id) do
+    conversation = Conversation |> Repo.get!(conversation_id) |> Repo.preload(:contact)
+
+    if conversation.unread_count > 0 do
+      from(c in Conversation, where: c.id == ^conversation.id)
+      |> Repo.update_all(set: [unread_count: 0])
+
+      broadcast_conversation(conversation.id)
+    end
+
+    if conversation.contact.read_policy == "on_open" do
+      from(m in Message,
+        where:
+          m.conversation_id == ^conversation.id and m.direction == "outbound" and
+            m.status == "delivered",
+        select: m.id
+      )
+      |> Repo.all()
+      |> Enum.each(&transition(&1, "read"))
+    end
+
+    :ok
+  end
+
+  @doc "Toggles contact presence; coming online delivers messages held at `sent`."
+  def set_contact_online(contact, online?) do
+    with {:ok, contact} <- Contacts.update_contact(contact, %{online: online?}) do
+      if online? do
+        delay = Accounts.get_settings().delivered_delay_ms
+
+        from(m in Message,
+          join: c in assoc(m, :conversation),
+          where:
+            c.contact_wa_id == ^contact.wa_id and m.direction == "outbound" and m.status == "sent"
+        )
+        |> Repo.all()
+        |> Enum.each(&StatusLifecycle.schedule(&1, "delivered", delay))
+      end
+
+      {:ok, contact}
+    end
+  end
 
   defp throughput(phone) do
     case Throughput.check(phone.id, phone.throughput_mps) do

@@ -119,7 +119,8 @@ defmodule Whelx.Graph.Error do
       "code" => code,
       "title" => title,
       "message" => title,
-      "error_data" => %{"details" => Keyword.get(opts, :details, details)}
+      "error_data" => %{"details" => Keyword.get(opts, :details, details)},
+      "href" => "/documentation/business-messaging/whatsapp/support/error-codes"
     }
   end
 
