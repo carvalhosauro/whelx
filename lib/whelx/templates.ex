@@ -23,6 +23,7 @@ defmodule Whelx.Templates do
     params = Attrs.stringify(params)
 
     with :ok <- Validation.validate_template_definition(params),
+         :ok <- check_header_handles(params["components"]),
          :ok <- ensure_unique(waba_id, params) do
       {:ok, template} =
         %Template{}
@@ -213,6 +214,26 @@ defmodule Whelx.Templates do
        )}
     else
       :ok
+    end
+  end
+
+  defp check_header_handles(components) do
+    handles =
+      for c <- components,
+          TemplateDefinition.type_of(c) == "HEADER",
+          handle <- List.wrap(get_in(c, ["example", "header_handle"])),
+          do: handle
+
+    case Enum.reject(handles, &Whelx.Media.handle_exists?/1) do
+      [] ->
+        :ok
+
+      [bad | _] ->
+        {:error,
+         Error.invalid_parameter(
+           "example.header_handle #{bad} não foi enviado via upload resumable",
+           subcode: 2_494_102
+         )}
     end
   end
 

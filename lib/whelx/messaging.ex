@@ -118,6 +118,34 @@ defmodule Whelx.Messaging do
     {:ok, message}
   end
 
+  @doc "A contact sends an attachment (image, audio, video, document, sticker)."
+  def receive_inbound_media(phone_number_id, wa_id, type, binary, mime_type, opts \\ [])
+      when type in ~w(image audio video document sticker) do
+    {:ok, media} = Whelx.Media.store(binary, mime_type, opts[:file_name])
+
+    content =
+      %{
+        "mime_type" => mime_type,
+        "sha256" => media.sha256,
+        "id" => media.id,
+        "url" => Whelx.Media.url(media)
+      }
+      |> put_present("caption", opts[:caption])
+      |> put_present("filename", if(type == "document", do: opts[:file_name]))
+      |> then(fn c ->
+        if type == "audio", do: Map.put(c, "voice", Keyword.get(opts, :voice, true)), else: c
+      end)
+
+    receive_inbound(phone_number_id, wa_id, %{
+      type: type,
+      content: content,
+      context_wamid: opts[:context_wamid]
+    })
+  end
+
+  defp put_present(map, _key, nil), do: map
+  defp put_present(map, key, value), do: Map.put(map, key, value)
+
   # Outbound
 
   @doc """
