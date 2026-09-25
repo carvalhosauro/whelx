@@ -28,6 +28,37 @@ defmodule WhelxWeb.Router do
     get "/", PageController, :home
   end
 
+  scope "/_whelx", WhelxWeb.Control do
+    pipe_through :api
+
+    post "/seed", SystemController, :seed
+    post "/reset", SystemController, :reset
+    get "/config", SystemController, :config
+    put "/config", SystemController, :update_config
+    post "/tokens", SystemController, :create_token
+    get "/chaos", SystemController, :chaos
+    put "/chaos", SystemController, :update_chaos
+
+    post "/contacts/bulk", ContactController, :bulk
+    post "/contacts/:wa_id/messages", ContactController, :send_message
+    post "/contacts/:wa_id/reply-interactive", ContactController, :reply_interactive
+    resources "/contacts", ContactController, param: "wa_id", except: [:new, :edit]
+
+    get "/messages", MessageController, :index
+    get "/conversations/:id", MessageController, :show_conversation
+    post "/conversations/:id/open", MessageController, :open
+    post "/conversations/:id/expire-window", MessageController, :expire_window
+
+    get "/templates", TemplateController, :index
+    post "/templates/:id/approve", TemplateController, :approve
+    post "/templates/:id/reject", TemplateController, :reject
+
+    get "/webhooks/deliveries", WebhookController, :index
+    post "/webhooks/deliveries/:id/redeliver", WebhookController, :redeliver
+    post "/webhooks/verify", WebhookController, :verify
+    get "/requests", WebhookController, :requests
+  end
+
   # Fake Graph API. Must stay last: `/:version/...` would shadow other routes.
   scope "/", WhelxWeb.Graph do
     pipe_through :graph
