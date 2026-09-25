@@ -1,7 +1,7 @@
 defmodule Whelx.Graph.Validation do
   @moduledoc """
   Validation of `POST /{phone_number_id}/messages` payloads and template
-  definitions, limited to what pigz-api sends. Failures are Meta `code 100`
+  definitions, covering what WhatsApp bots and campaign senders commonly use. Failures are Meta `code 100`
   errors with a descriptive `error_user_msg`.
   """
 

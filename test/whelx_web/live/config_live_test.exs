@@ -8,10 +8,10 @@ defmodule WhelxWeb.ConfigLiveTest do
     account_fixture()
   end
 
-  test "shows the pigz-api env block and secrets", %{conn: conn, app: app} do
+  test "shows the env block and secrets", %{conn: conn, app: app} do
     {:ok, view, html} = live(conn, ~p"/config")
     assert html =~ "META_APP_ID=#{app.id}"
-    assert html =~ "WHATSAPP_WEBHOOK_VERIFY_TOKEN=#{app.verify_token}"
+    assert html =~ "WEBHOOK_VERIFY_TOKEN=#{app.verify_token}"
     refute html =~ ~s(value="#{app.app_secret}")
     html = view |> element("button", "Mostrar") |> render_click()
     assert html =~ app.app_secret
@@ -22,11 +22,11 @@ defmodule WhelxWeb.ConfigLiveTest do
 
     view
     |> form("#app-form",
-      app: %{webhook_url: "http://pigz:8000/api/webhook/whatsapp", verify_token: "tok"}
+      app: %{webhook_url: "http://myapp:8000/webhooks/whatsapp", verify_token: "tok"}
     )
     |> render_submit()
 
-    assert %{webhook_url: "http://pigz:8000/api/webhook/whatsapp", verify_token: "tok"} =
+    assert %{webhook_url: "http://myapp:8000/webhooks/whatsapp", verify_token: "tok"} =
              Accounts.get_app()
 
     view

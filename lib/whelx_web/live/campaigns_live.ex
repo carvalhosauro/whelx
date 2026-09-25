@@ -107,7 +107,7 @@ defmodule WhelxWeb.CampaignsLive do
             </tbody>
           </table>
           <p :if={@stats == []} class="py-6 text-center text-sm text-base-content/60">
-            Nenhum envio de template nessa janela. Dispare uma campanha pela pigz-api.
+            Nenhum envio de template nessa janela. Dispare uma campanha pela sua aplicação.
           </p>
         </.panel>
       </.page>

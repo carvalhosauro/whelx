@@ -34,7 +34,7 @@ defmodule WhelxWeb.Graph.MediaEndpointsTest do
              build_conn() |> get("/_media/#{media.id}") |> json_response(401)
   end
 
-  test "resumable upload with pigz-api's exact requests returns a header handle", %{
+  test "resumable upload with a curl-based client's exact requests returns a header handle", %{
     conn: conn,
     app: app,
     token: token

@@ -5,7 +5,7 @@ defmodule Whelx.Fixtures do
   def account_fixture(opts \\ []) do
     {:ok, app} =
       Accounts.upsert_app(%{
-        webhook_url: Keyword.get(opts, :webhook_url, "http://pigz.test/api/webhook/whatsapp")
+        webhook_url: Keyword.get(opts, :webhook_url, "http://app.test/webhooks/whatsapp")
       })
 
     {:ok, waba} =
@@ -35,7 +35,7 @@ defmodule Whelx.Fixtures do
         "components" => [
           %{
             "type" => "BODY",
-            "text" => "Mensagem de *{{1}}*:\n\n{{2}}\n\n_Enviado via Pigz_",
+            "text" => "Mensagem de *{{1}}*:\n\n{{2}}\n\n_Enviado via Loja_",
             "example" => %{"body_text" => [["Pizzaria", "Promo de hoje"]]}
           }
         ]

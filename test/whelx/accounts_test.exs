@@ -67,8 +67,8 @@ defmodule Whelx.AccountsTest do
       assert {:error, changeset} = Accounts.upsert_app(%{webhook_url: "ftp://nope"})
       assert "must be an http(s) URL" in errors_on(changeset).webhook_url
 
-      assert {:ok, %{webhook_url: "http://pigz:8000/api/webhook/whatsapp"}} =
-               Accounts.upsert_app(%{webhook_url: "http://pigz:8000/api/webhook/whatsapp"})
+      assert {:ok, %{webhook_url: "http://myapp:8000/webhooks/whatsapp"}} =
+               Accounts.upsert_app(%{webhook_url: "http://myapp:8000/webhooks/whatsapp"})
     end
 
     test "regenerate_app_secret/0 rotates the secret" do

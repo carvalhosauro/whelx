@@ -15,7 +15,7 @@ defmodule Whelx.ControlTest do
       "app_id" => "111111111111111",
       "app_secret" => "0123456789abcdef0123456789abcdef",
       "verify_token" => "verify-me",
-      "webhook_url" => "http://pigz.test/api/webhook/whatsapp"
+      "webhook_url" => "http://app.test/webhooks/whatsapp"
     },
     "wabas" => [
       %{
@@ -75,14 +75,17 @@ defmodule Whelx.ControlTest do
     assert Accounts.list_wabas() == []
   end
 
-  test "env_block/0 lists the pigz-api variables" do
+  test "env_block/0 lists the client app variables" do
     {:ok, _} = Control.seed(@seed)
     block = Control.env_block()
+    assert block =~ "GRAPH_API_BASE_URL=http://whelx.test"
+    assert block =~ "GRAPH_API_VERSION=v25.0"
     assert block =~ "META_APP_ID=111111111111111"
     assert block =~ "META_APP_SECRET=0123456789abcdef0123456789abcdef"
-    assert block =~ "META_GRAPH_BASE_URL=http://whelx.test"
-    assert block =~ "META_GRAPH_API_VERSION=v25.0"
-    assert block =~ "WHATSAPP_WEBHOOK_VERIFY_TOKEN=verify-me"
+    assert block =~ "WHATSAPP_ACCESS_TOKEN=EAAwhelxTestToken"
+    assert block =~ "WHATSAPP_BUSINESS_ACCOUNT_ID=222222222222222"
+    assert block =~ "WHATSAPP_PHONE_NUMBER_ID=333333333333333"
+    assert block =~ "WEBHOOK_VERIFY_TOKEN=verify-me"
   end
 
   describe "with an account" do

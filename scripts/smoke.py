@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-End-to-end smoke test against a running whelx, acting as pigz-api.
+End-to-end smoke test against a running whelx, acting as a WhatsApp Cloud API client app.
 
 Starts a local webhook receiver that verifies X-Hub-Signature-256, seeds a
 scenario through the control API and drives the Graph API exactly like
-pigz-api's MetaWhatsappApiClient does. Exits non-zero on the first failure.
+a typical Cloud API client does. Exits non-zero on the first failure.
 
 Usage:
     python3 scripts/smoke.py [--base http://localhost:4000] [--port 8765]
@@ -243,7 +243,7 @@ def main():
                       "subtotal": {"value": 4500, "offset": 100},
                       "tax": {"value": 500, "offset": 100, "description": "Taxa de entrega"}},
             "payment_settings": [{"type": "pix_dynamic_code", "pix_dynamic_code": {
-                "code": "00020126580014br.gov.bcb.pix", "merchant_name": "Pizzaria", "key": "34895008000185", "key_type": "CNPJ"}}]}}}
+                "code": "00020126580014br.gov.bcb.pix", "merchant_name": "Pizzaria", "key": "12345678000195", "key_type": "CNPJ"}}]}}}
     status, body = send(client, CUSTOMER, "interactive", order)
     check("send order_details (Pix) → 200", status == 200, body)
     order_wamid = body["messages"][0]["id"]
@@ -301,7 +301,7 @@ def main():
     print("campaign flow")
     template = {"name": "crm_campaign_message", "language": "pt_BR", "category": "MARKETING", "components": [
         {"type": "HEADER", "format": "IMAGE", "example": {"header_handle": [uploaded["h"]]}},
-        {"type": "BODY", "text": "Mensagem de *{{1}}*:\n\n{{2}}\n\n_Enviado via Pigz_", "example": {"body_text": [["Pizzaria", "Promo"]]}}]}
+        {"type": "BODY", "text": "Mensagem de *{{1}}*:\n\n{{2}}\n\n_Enviado via Loja_", "example": {"body_text": [["Pizzaria", "Promo"]]}}]}
     status, created = client.graph("POST", f"/{WABA}/message_templates", template)
     check("create template → PENDING", status == 200 and created["status"] == "PENDING", created)
     status, dup = client.graph("POST", f"/{WABA}/message_templates", template)

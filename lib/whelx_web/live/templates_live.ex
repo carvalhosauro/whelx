@@ -61,7 +61,7 @@ defmodule WhelxWeb.TemplatesLive do
     <Layouts.app flash={@flash} active={:templates}>
       <.page
         title="Templates"
-        subtitle="Criados pela pigz-api via POST /{waba}/message_templates. Aprove ou rejeite aqui."
+        subtitle="Criados pela sua aplicação via POST /{waba}/message_templates. Aprove ou rejeite aqui."
       >
         <.panel title="Política de aprovação" class="mb-4">
           <form id="policy-form" phx-submit="policy" class="flex flex-wrap items-end gap-2 text-sm">
@@ -142,7 +142,7 @@ defmodule WhelxWeb.TemplatesLive do
               </tbody>
             </table>
             <p :if={@templates == []} class="py-6 text-center text-sm text-base-content/60">
-              Nenhum template. Crie pelo painel da pigz-api ou via POST /_whelx/seed.
+              Nenhum template. Crie pela sua aplicação ou via POST /_whelx/seed.
             </p>
           </.panel>
 

@@ -28,7 +28,7 @@ defmodule WhelxWeb.Graph.TemplateEndpointsTest do
              json_response(conn, 400)
   end
 
-  test "GET lists with fields and paging like pigz-api reads it", %{
+  test "GET lists with fields and paging like clients read it", %{
     conn: conn,
     waba: waba,
     token: token

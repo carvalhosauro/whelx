@@ -1,6 +1,6 @@
 defmodule Whelx.E2EFlowTest do
   @moduledoc """
-  Plays pigz-api against whelx end to end: signed webhooks in, Graph API calls
+  Plays a client app against whelx end to end: signed webhooks in, Graph API calls
   out, status progression back in. Mirrors scripts/smoke.py without a server.
   """
   use WhelxWeb.ConnCase
@@ -22,7 +22,7 @@ defmodule Whelx.E2EFlowTest do
           "app_id" => "100000000000001",
           "app_secret" => @secret,
           "verify_token" => "v",
-          "webhook_url" => "http://pigz.test/api/webhook/whatsapp"
+          "webhook_url" => "http://app.test/webhooks/whatsapp"
         },
         "wabas" => [
           %{
@@ -187,7 +187,7 @@ defmodule Whelx.E2EFlowTest do
                   "pix_dynamic_code" => %{
                     "code" => "000201",
                     "merchant_name" => "Pizzaria",
-                    "key" => "34895008000185",
+                    "key" => "12345678000195",
                     "key_type" => "CNPJ"
                   }
                 }

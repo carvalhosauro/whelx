@@ -2,7 +2,7 @@ defmodule WhelxWeb.Plugs.DevReloader do
   @moduledoc """
   Dev-only: runs `Phoenix.CodeReloader` and the repo status check for the UI
   and control API, but not for Graph API traffic. The code reloader serializes
-  requests on a global lock, which turns a 75 msg/s campaign from pigz-api into
+  requests on a global lock, which turns a 75 msg/s campaign into
   a queue of timeouts.
   """
   @behaviour Plug

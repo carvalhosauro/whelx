@@ -92,16 +92,23 @@ defmodule Whelx.Control do
     }
   end
 
-  @doc "Environment block for pigz-api's .env."
+  @doc "Environment block for the client app's .env."
   def env_block do
     app = Accounts.get_app!()
+    waba = List.first(Accounts.list_wabas())
+    phone = waba && List.first(Accounts.list_phone_numbers(waba.id))
+    token = Enum.find(Accounts.list_tokens(), &(waba && waba.id in &1.waba_ids))
 
     """
+    # Point your WhatsApp Cloud API client at whelx instead of https://graph.facebook.com
+    GRAPH_API_BASE_URL=#{Whelx.public_url()}
+    GRAPH_API_VERSION=v25.0
     META_APP_ID=#{app.id}
     META_APP_SECRET=#{app.app_secret}
-    META_GRAPH_BASE_URL=#{Whelx.public_url()}
-    META_GRAPH_API_VERSION=v25.0
-    WHATSAPP_WEBHOOK_VERIFY_TOKEN=#{app.verify_token}
+    WEBHOOK_VERIFY_TOKEN=#{app.verify_token}
+    WHATSAPP_ACCESS_TOKEN=#{token && token.token}
+    WHATSAPP_BUSINESS_ACCOUNT_ID=#{waba && waba.id}
+    WHATSAPP_PHONE_NUMBER_ID=#{phone && phone.id}
     """
   end
 

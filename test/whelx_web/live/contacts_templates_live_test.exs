@@ -64,7 +64,7 @@ defmodule WhelxWeb.ContactsTemplatesLiveTest do
       html =
         view |> element(~s(button[phx-click="preview"][phx-value-id="#{t.id}"])) |> render_click()
 
-      assert html =~ "Enviado via Pigz"
+      assert html =~ "Enviado via Loja"
     end
 
     test "updates approval policy", %{conn: conn} do

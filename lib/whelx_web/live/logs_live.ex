@@ -85,7 +85,7 @@ defmodule WhelxWeb.LogsLive do
     <Layouts.app flash={@flash} active={:logs}>
       <.page
         title="Logs"
-        subtitle="Tudo que a pigz-api chamou na Graph API fake e tudo que o whelx entregou por webhook."
+        subtitle="Tudo que a sua aplicação chamou na Graph API fake e tudo que o whelx entregou por webhook."
       >
         <div class="mb-3 flex flex-wrap items-center gap-2">
           <.btn

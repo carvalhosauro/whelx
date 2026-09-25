@@ -27,7 +27,7 @@ defmodule Whelx.Mcp.Tools do
     {"get_config",
      "Configuração atual: app (secret, verify token, webhook_url), wabas, números, tokens, settings, caos.",
      %{}, []},
-    {"env_block", "Bloco .env para a pigz-api apontar para o whelx.", %{}, []},
+    {"env_block", "Bloco .env para a sua aplicação apontar para o whelx.", %{}, []},
     {"send_as_contact",
      "Um contato fake manda mensagem para um número business. type: text|location|reaction|image|audio|video|document.",
      %{

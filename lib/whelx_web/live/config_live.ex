@@ -55,7 +55,7 @@ defmodule WhelxWeb.ConfigLive do
 
     {:noreply,
      socket
-     |> put_flash(:info, "App secret regenerado — atualize META_APP_SECRET na pigz-api")
+     |> put_flash(:info, "App secret regenerado — atualize o app secret na sua aplicação")
      |> load()}
   end
 
@@ -132,7 +132,7 @@ defmodule WhelxWeb.ConfigLive do
     <Layouts.app flash={@flash} active={:config}>
       <.page
         title="Configuração"
-        subtitle="Segredos, números e integração com a pigz-api. Tudo local."
+        subtitle="Segredos, números e integração com a sua aplicação. Tudo local."
       >
         <div class="grid gap-4 lg:grid-cols-2">
           <.panel title="App Meta (fake)">
@@ -151,7 +151,7 @@ defmodule WhelxWeb.ConfigLive do
                 <.btn
                   variant="ghost"
                   phx-click="regenerate_secret"
-                  data-confirm="Regenerar o app secret? A pigz-api precisará do novo valor."
+                  data-confirm="Regenerar o app secret? Sua aplicação precisará do novo valor."
                 >
                   Regenerar
                 </.btn>
@@ -160,7 +160,7 @@ defmodule WhelxWeb.ConfigLive do
 
             <.form for={@app_form} id="app-form" phx-submit="save_app" class="space-y-3">
               <label class="block text-sm">
-                <span class="mb-1 block text-base-content/70">Webhook URL (pigz-api)</span>
+                <span class="mb-1 block text-base-content/70">Webhook URL (sua aplicação)</span>
                 <input
                   name="app[webhook_url]"
                   value={@app_form[:webhook_url].value}
@@ -198,15 +198,15 @@ defmodule WhelxWeb.ConfigLive do
             </p>
           </.panel>
 
-          <.panel title=".env da pigz-api">
+          <.panel title=".env da sua aplicação">
             <:actions><.copy_button text={@env_block} label="Copiar tudo" /></:actions>
             <pre
               id="env-block"
               class="overflow-x-auto rounded-lg bg-base-200 p-3 font-mono text-xs leading-relaxed"
             >{@env_block}</pre>
             <p class="mt-2 text-xs text-base-content/60">
-              Use <code>META_GRAPH_BASE_URL</code>
-              no cliente principal (<code>MetaWhatsappApiClient</code>) e no de notificações.
+              Os nomes das variáveis são sugestões: use os nomes que a sua aplicação já lê.
+              O essencial é trocar a base URL da Graph API para o whelx.
             </p>
           </.panel>
 

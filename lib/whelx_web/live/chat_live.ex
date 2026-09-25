@@ -555,7 +555,7 @@ defmodule WhelxWeb.ChatLive do
               <div>
                 <p class="text-lg font-semibold">Escolha um contato</p>
                 <p class="mt-1 text-sm text-base-content/60">
-                  Você conversa como o cliente. As respostas chegam da pigz-api pela Graph API fake.
+                  Você conversa como o cliente. As respostas chegam da sua aplicação pela Graph API fake.
                 </p>
               </div>
             </div>

@@ -54,12 +54,12 @@ defmodule WhelxWeb.Control.ControlApiTest do
 
   test "PUT /_whelx/config updates app and settings", %{conn: conn} do
     body = %{
-      "app" => %{"webhook_url" => "http://pigz:8000/api/webhook/whatsapp"},
+      "app" => %{"webhook_url" => "http://myapp:8000/webhooks/whatsapp"},
       "settings" => %{"sent_delay_ms" => 10}
     }
 
     assert %{
-             "app" => %{"webhook_url" => "http://pigz:8000/api/webhook/whatsapp"},
+             "app" => %{"webhook_url" => "http://myapp:8000/webhooks/whatsapp"},
              "settings" => %{"sent_delay_ms" => 10}
            } = conn |> put("/_whelx/config", body) |> json_response(200)
   end

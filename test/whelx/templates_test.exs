@@ -112,7 +112,7 @@ defmodule Whelx.TemplatesTest do
             "text" => "Participar de {{1}}?",
             "example" => %{"body_text" => [["Fidelidade"]]}
           },
-          %{"type" => "FOOTER", "text" => "Pigz"},
+          %{"type" => "FOOTER", "text" => "Loja Demo"},
           %{
             "type" => "BUTTONS",
             "buttons" => [
@@ -143,7 +143,7 @@ defmodule Whelx.TemplatesTest do
 
     assert rendered["header"] == %{"format" => "TEXT", "text" => "Oi Bia"}
     assert rendered["body"] == "Participar de Clube?"
-    assert rendered["footer"] == "Pigz"
+    assert rendered["footer"] == "Loja Demo"
 
     assert [
              %{

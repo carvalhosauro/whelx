@@ -96,7 +96,7 @@ defmodule WhelxWeb.ChatLiveTest do
       "body" => %{"text" => "Acompanhe"},
       "action" => %{
         "name" => "cta_url",
-        "parameters" => %{"display_text" => "Rastrear", "url" => "https://pigz.app/t/1"}
+        "parameters" => %{"display_text" => "Rastrear", "url" => "https://example.com/t/1"}
       }
     })
 
@@ -129,7 +129,7 @@ defmodule WhelxWeb.ChatLiveTest do
               "pix_dynamic_code" => %{
                 "code" => "00020126PIXCODE",
                 "merchant_name" => "Pizzaria",
-                "key" => "34895008000185",
+                "key" => "12345678000195",
                 "key_type" => "CNPJ"
               }
             }

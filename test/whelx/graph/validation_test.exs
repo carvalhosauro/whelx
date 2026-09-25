@@ -195,7 +195,7 @@ defmodule Whelx.Graph.ValidationTest do
         "body" => %{"text" => "Acompanhe"},
         "action" => %{
           "name" => "cta_url",
-          "parameters" => %{"display_text" => "Abrir", "url" => "https://pigz.app/p/1"}
+          "parameters" => %{"display_text" => "Abrir", "url" => "https://example.com/p/1"}
         }
       }
 
@@ -242,7 +242,7 @@ defmodule Whelx.Graph.ValidationTest do
                 "pix_dynamic_code" => %{
                   "code" => "000201...",
                   "merchant_name" => "Pizzaria",
-                  "key" => "34895008000185",
+                  "key" => "12345678000195",
                   "key_type" => "CNPJ"
                 }
               }
@@ -364,7 +364,7 @@ defmodule Whelx.Graph.ValidationTest do
       )
     end
 
-    test "accepts pigz-api's CRM template" do
+    test "accepts a typical campaign template" do
       assert :ok = Validation.validate_template_definition(tpl())
     end
 
