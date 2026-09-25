@@ -75,7 +75,13 @@ config :whelx, Oban,
   repo: Whelx.Repo,
   stage_interval: 250,
   queues: [default: 10, statuses: 20, webhooks: 20],
-  plugins: [{Oban.Plugins.Pruner, max_age: 86_400}]
+  plugins: [
+    {Oban.Plugins.Pruner, max_age: 86_400},
+    # Jobs left "executing" by a node that died or a hot reload go back to the
+    # queue, like Meta redelivering unacknowledged webhooks. Must stay well
+    # above the webhook HTTP timeout (10 s).
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(2)}
+  ]
 
 config :whelx,
   data_dir: Path.expand("../data", __DIR__),

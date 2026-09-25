@@ -3,6 +3,9 @@ defmodule Whelx.Webhooks.Client do
 
   @timeout 10_000
 
+  @spec timeout_ms() :: pos_integer()
+  def timeout_ms, do: @timeout
+
   def post(url, body, headers) do
     Req.post(url, [body: body, headers: headers] ++ base_opts())
   end
