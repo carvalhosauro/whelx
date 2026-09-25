@@ -17,6 +17,7 @@ defmodule Whelx.Application do
       {Phoenix.PubSub, name: Whelx.PubSub},
       {Oban, Application.fetch_env!(:whelx, Oban)},
       Whelx.Chaos.Counter,
+      Whelx.Messaging.Throughput,
       # Start to serve requests, typically the last entry
       WhelxWeb.Endpoint
     ]

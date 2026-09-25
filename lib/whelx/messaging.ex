@@ -2,8 +2,10 @@ defmodule Whelx.Messaging do
   @moduledoc "Conversations and messages between business numbers and fake contacts."
 
   import Ecto.Query
-  alias Whelx.{Accounts, Contacts, Events, Ids, Repo, Webhooks}
-  alias Whelx.Messaging.{Conversation, Message}
+  alias Whelx.{Accounts, Contacts, Events, Ids, Repo, Templates, Webhooks}
+  alias Whelx.Accounts.PhoneNumber
+  alias Whelx.Graph.Error
+  alias Whelx.Messaging.{Conversation, Message, Throughput}
   alias Whelx.Webhooks.Payload
 
   @window_hours 24
@@ -114,6 +116,143 @@ defmodule Whelx.Messaging do
     broadcast_message(:message_created, message)
     broadcast_conversation(conversation.id)
     {:ok, message}
+  end
+
+  # Outbound
+
+  @doc """
+  The business sends a message (already validated by `Graph.Validation`).
+  Returns Meta's synchronous errors (130429, 132000, 132001) and otherwise
+  accepts the message, deciding up front if it will fail asynchronously.
+  """
+  def send_outbound(%PhoneNumber{} = phone, %{kind: :message} = request) do
+    with :ok <- throughput(phone),
+         {:ok, extra} <- prepare(phone, request) do
+      contact = Contacts.find_or_create_contact(request.to)
+      conversation = get_or_create_conversation(phone.id, contact.wa_id)
+      now = DateTime.utc_now()
+
+      {:ok, message} =
+        Repo.transaction(fn ->
+          message =
+            Repo.insert!(%Message{
+              wamid: Ids.wamid(),
+              conversation_id: conversation.id,
+              direction: "outbound",
+              type: request.type,
+              payload: Map.put(extra, "content", request.content),
+              status: "accepted",
+              context_wamid: request.context_wamid,
+              planned_failure: planned_failure(request, contact, conversation)
+            })
+
+          from(c in Conversation, where: c.id == ^conversation.id)
+          |> Repo.update_all(
+            set: [last_message_at: now, typing_until: nil],
+            inc: [unread_count: 1]
+          )
+
+          message
+        end)
+
+      after_accept(message)
+      broadcast_message(:message_created, message)
+      broadcast_conversation(conversation.id)
+      {:ok, message}
+    end
+  end
+
+  @doc false
+  def after_accept(_message), do: :ok
+
+  defp throughput(phone) do
+    case Throughput.check(phone.id, phone.throughput_mps) do
+      :ok ->
+        :ok
+
+      {:error, :rate_limited} ->
+        {:error,
+         Error.new(130_429,
+           details:
+             "Message failed to send because there were too many messages sent from this phone number in a short period of time"
+         )}
+    end
+  end
+
+  defp prepare(phone, %{type: "template", content: content}) do
+    name = content["name"]
+    language = get_in(content, ["language", "code"])
+    components = content["components"] || []
+
+    with {:ok, template} <- Templates.find_approved(phone.waba_id, name, language),
+         :ok <- Templates.check_params(template, components) do
+      {:ok,
+       %{
+         "rendered" => Templates.render(template, components),
+         "category" => String.downcase(template.category)
+       }}
+    end
+  end
+
+  defp prepare(_phone, _request), do: {:ok, %{"category" => "service"}}
+
+  defp planned_failure(request, contact, conversation) do
+    cond do
+      contact.behavior == "invalid_number" ->
+        %{"code" => 131_026}
+
+      contact.behavior == "blocked" ->
+        %{
+          "code" => 131_026,
+          "details" => "Unable to deliver message. The recipient has blocked this business."
+        }
+
+      request.type in ~w(text interactive) and not window_open?(conversation) ->
+        %{"code" => 131_047}
+
+      true ->
+        nil
+    end
+  end
+
+  @doc "Read receipt from the business; optional typing indicator (25 s)."
+  def mark_read_by_business(phone_number_id, wamid, typing?) do
+    message =
+      Repo.one(
+        from m in Message,
+          join: c in assoc(m, :conversation),
+          where:
+            m.wamid == ^wamid and m.direction == "inbound" and
+              c.phone_number_id == ^phone_number_id
+      )
+
+    case message do
+      nil ->
+        {:error,
+         Error.invalid_parameter("message_id #{wamid} não encontrado nesta linha",
+           details: "Invalid message id"
+         )}
+
+      message ->
+        now = DateTime.utc_now()
+
+        from(m in Message,
+          where:
+            m.conversation_id == ^message.conversation_id and m.direction == "inbound" and
+              m.id <= ^message.id and m.status != "read"
+        )
+        |> Repo.update_all(set: [status: "read", read_at: now, updated_at: now])
+
+        if typing? do
+          from(c in Conversation, where: c.id == ^message.conversation_id)
+          |> Repo.update_all(set: [typing_until: DateTime.add(now, 25, :second)])
+        end
+
+        message = Repo.get!(Message, message.id)
+        broadcast_message(:message_updated, message)
+        broadcast_conversation(message.conversation_id)
+        {:ok, message}
+    end
   end
 
   # Queries
