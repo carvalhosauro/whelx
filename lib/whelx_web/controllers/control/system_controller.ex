@@ -10,7 +10,14 @@ defmodule WhelxWeb.Control.SystemController do
   end
 
   def reset(conn, params) do
-    :ok = Control.reset(String.split(params["keep"] || "", ",", trim: true))
+    keep =
+      case params["keep"] do
+        list when is_list(list) -> Enum.map(list, &to_string/1)
+        csv when is_binary(csv) -> String.split(csv, ",", trim: true)
+        _ -> []
+      end
+
+    :ok = Control.reset(keep)
     json(conn, %{"ok" => true})
   end
 

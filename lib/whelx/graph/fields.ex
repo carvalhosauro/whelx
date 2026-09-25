@@ -5,8 +5,11 @@ defmodule Whelx.Graph.Fields do
   def select(map, fields, default) do
     wanted =
       case fields do
-        blank when blank in [nil, ""] -> default
-        list -> list |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
+        list when is_binary(list) and list != "" ->
+          list |> String.split(",", trim: true) |> Enum.map(&String.trim/1)
+
+        _ ->
+          default
       end
 
     Map.take(map, Enum.uniq(["id" | wanted]))

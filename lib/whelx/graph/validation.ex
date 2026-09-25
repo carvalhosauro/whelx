@@ -38,13 +38,30 @@ defmodule Whelx.Graph.Validation do
   end
 
   def validate_send(params) when is_map(params) do
+    do_validate_send(params)
+  rescue
+    # Backstop: an unexpected shape must be Meta's code 100, never a whelx 500.
+    _ in [
+      FunctionClauseError,
+      Protocol.UndefinedError,
+      ArgumentError,
+      BadMapError,
+      CaseClauseError
+    ] ->
+      fail("corpo da requisição com formato inválido")
+  end
+
+  def validate_send(_params), do: fail("corpo da requisição inválido")
+
+  defp do_validate_send(params) do
     with :ok <- messaging_product(params),
          :ok <- recipient_type(params),
          {:ok, to} <- recipient(params),
          {:ok, type} <- string(params, "type"),
          :ok <- supported(type),
          {:ok, content} <- content(params, type),
-         :ok <- validate_content(type, content) do
+         :ok <- validate_content(type, content),
+         {:ok, context_wamid} <- context(params["context"]) do
       {:ok,
        %{
          kind: :message,
@@ -52,12 +69,14 @@ defmodule Whelx.Graph.Validation do
          to_input: to_string(params["to"]),
          type: type,
          content: content,
-         context_wamid: get_in(params, ["context", "message_id"])
+         context_wamid: context_wamid
        }}
     end
   end
 
-  def validate_send(_params), do: fail("corpo da requisição inválido")
+  defp context(nil), do: {:ok, nil}
+  defp context(%{"message_id" => id}) when is_binary(id), do: {:ok, id}
+  defp context(_), do: fail("context deve ser {message_id: \"wamid...\"}")
 
   @spec validate_template_definition(map()) :: :ok | {:error, Error.t()}
   def validate_template_definition(params), do: TemplateDefinition.validate(params)
@@ -69,6 +88,9 @@ defmodule Whelx.Graph.Validation do
     do: fail(~s(recipient_type deve ser "individual"))
 
   defp recipient_type(_), do: :ok
+
+  defp recipient(%{"to" => to}) when not (is_binary(to) or is_integer(to)),
+    do: fail("to deve ser texto com o número")
 
   defp recipient(params) do
     digits = Attrs.digits(params["to"])
@@ -103,7 +125,7 @@ defmodule Whelx.Graph.Validation do
 
   defp validate_content("template", content) do
     with {:ok, _name} <- string(content, "name"),
-         {:ok, _code} <- string(content["language"] || %{}, "code") do
+         {:ok, _code} <- string(map_or_empty(content["language"]), "code") do
       template_components(content["components"])
     end
   end
@@ -150,6 +172,10 @@ defmodule Whelx.Graph.Validation do
   defp params_list(_), do: fail("parameters deve ser uma lista")
 
   # Shared helpers (also used by the submodules)
+
+  @doc false
+  def map_or_empty(value) when is_map(value), do: value
+  def map_or_empty(_value), do: %{}
 
   @doc false
   def fail(message), do: {:error, Error.invalid_parameter(message)}

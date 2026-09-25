@@ -109,9 +109,15 @@ defmodule Whelx.Control do
   def reset(keep \\ []) do
     keep = MapSet.new(keep)
 
-    Oban.cancel_all_jobs(
+    jobs =
       from(j in Oban.Job, where: j.state in ["available", "scheduled", "retryable", "executing"])
-    )
+
+    jobs =
+      if MapSet.member?(keep, "templates"),
+        do: where(jobs, [j], j.worker != "Whelx.Templates.ReviewWorker"),
+        else: jobs
+
+    Oban.cancel_all_jobs(jobs)
 
     Repo.transaction(fn ->
       Repo.delete_all(Whelx.Webhooks.Delivery)
@@ -151,7 +157,8 @@ defmodule Whelx.Control do
   def send_as_contact(wa_id, attrs) do
     attrs = Attrs.stringify(attrs)
 
-    with {:ok, phone_id} <- phone_id(attrs) do
+    with :ok <- valid_wa_id(wa_id),
+         {:ok, phone_id} <- phone_id(attrs) do
       context = attrs["context_wamid"]
 
       case attrs["type"] do
@@ -177,6 +184,12 @@ defmodule Whelx.Control do
           {:error, "tipo não suportado: #{type}"}
       end
     end
+  end
+
+  defp valid_wa_id(wa_id) do
+    if String.length(Attrs.digits(wa_id)) in 8..15,
+      do: :ok,
+      else: {:error, "wa_id inválido: #{inspect(wa_id)} (8 a 15 dígitos)"}
   end
 
   defp phone_id(%{"phone_number_id" => id}) when is_binary(id) and id != "" do

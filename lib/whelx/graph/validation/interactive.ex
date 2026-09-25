@@ -6,6 +6,14 @@ defmodule Whelx.Graph.Validation.Interactive do
 
   @key_types ~w(CPF CNPJ EMAIL PHONE EVP)
 
+  def validate(%{"action" => action}) when not is_map(action),
+    do: fail("interactive.action deve ser um objeto")
+
+  def validate(%{"body" => body}) when not is_map(body),
+    do: fail("interactive.body deve ser um objeto")
+
+  def validate(i) when not is_map(i), do: fail("interactive deve ser um objeto")
+
   def validate(%{"type" => "button"} = i) do
     with :ok <- body(i), do: buttons(get_in(i, ["action", "buttons"]))
   end
@@ -65,6 +73,14 @@ defmodule Whelx.Graph.Validation.Interactive do
   defp button(_), do: fail("botão deve ser {type: reply, reply: {id, title}}")
 
   defp sections(list) when is_list(list) and length(list) in 1..10 do
+    if Enum.all?(list, &(is_map(&1) and is_list(&1["rows"] || []))),
+      do: valid_sections(list),
+      else: fail("action.sections: cada seção precisa de rows (lista)")
+  end
+
+  defp sections(_), do: fail("action.sections deve ter de 1 a 10 seções")
+
+  defp valid_sections(list) do
     rows = Enum.flat_map(list, &(&1["rows"] || []))
 
     cond do
@@ -80,8 +96,6 @@ defmodule Whelx.Graph.Validation.Interactive do
              do: unique_rows(rows)
     end
   end
-
-  defp sections(_), do: fail("action.sections deve ter de 1 a 10 seções")
 
   defp section_title(%{"title" => title}) when is_binary(title),
     do: max_len(title, 24, "section.title")

@@ -67,7 +67,8 @@ defmodule Whelx.Graph.Error do
       subcode: opts[:subcode],
       user_title: opts[:user_title],
       user_msg: opts[:user_msg],
-      details: opts[:details]
+      details: opts[:details],
+      type: Keyword.get(opts, :type, "OAuthException")
     }
   end
 
@@ -80,6 +81,7 @@ defmodule Whelx.Graph.Error do
   def unknown_object(method, id) do
     new(100,
       subcode: 33,
+      type: "GraphMethodException",
       message:
         "Unsupported #{method} request. Object with ID '#{id}' does not exist, cannot be loaded due to missing permissions, or does not support this operation."
     )

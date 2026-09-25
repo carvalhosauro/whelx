@@ -14,6 +14,11 @@ defmodule WhelxWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :control do
+    plug :accepts, ["json"]
+    plug WhelxWeb.Plugs.LocalOnly
+  end
+
   pipeline :graph do
     plug :put_format, "json"
     plug WhelxWeb.Plugs.GraphRequestLogger
@@ -36,7 +41,7 @@ defmodule WhelxWeb.Router do
   end
 
   scope "/_whelx", WhelxWeb.Control do
-    pipe_through :api
+    pipe_through :control
 
     post "/seed", SystemController, :seed
     post "/reset", SystemController, :reset
@@ -68,7 +73,7 @@ defmodule WhelxWeb.Router do
   end
 
   scope "/_whelx", WhelxWeb do
-    pipe_through :api
+    pipe_through :control
 
     post "/mcp", McpController, :handle
     get "/mcp", McpController, :stream

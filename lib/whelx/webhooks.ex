@@ -118,7 +118,23 @@ defmodule Whelx.Webhooks do
   @doc "Performs one delivery attempt."
   @spec attempt(Delivery.t(), pos_integer()) :: :ok | {:error, String.t()}
   def attempt(%Delivery{} = delivery, attempt) do
-    delivery = merge_batch(delivery)
+    case skip_reason(delivery.waba_id) do
+      nil -> do_attempt(merge_batch(delivery), attempt)
+      reason -> skip(delivery, reason)
+    end
+  end
+
+  # Config changed after enqueue (URL cleared, WABA unsubscribed): final state, no crash.
+  defp skip(delivery, reason) do
+    delivery
+    |> Ecto.Changeset.change(state: "skipped", last_error: reason)
+    |> Repo.update!()
+    |> then(&broadcast({:ok, &1}))
+
+    :ok
+  end
+
+  defp do_attempt(delivery, attempt) do
     app = Accounts.get_app!()
     body = Jason.encode!(delivery.payload)
     signature = Signer.sign(body, app.app_secret)
@@ -130,7 +146,14 @@ defmodule Whelx.Webhooks do
     ]
 
     started = System.monotonic_time(:millisecond)
-    result = Client.post(app.webhook_url, body, headers)
+
+    result =
+      try do
+        Client.post(app.webhook_url, body, headers)
+      rescue
+        exception -> {:error, exception}
+      end
+
     latency = System.monotonic_time(:millisecond) - started
 
     {state, status, response, error} =
