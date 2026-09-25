@@ -47,3 +47,4 @@ npm-debug.log
 # Internal design notes and client-specific runbooks (kept local)
 /docs/superpowers/
 /viral-audit-*.md
+__pycache__/

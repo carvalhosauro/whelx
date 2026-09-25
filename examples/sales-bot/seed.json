@@ -1,0 +1,24 @@
+{
+  "app": {
+    "app_secret": "0123456789abcdef0123456789abcdef",
+    "verify_token": "sales-bot-verify",
+    "webhook_url": "http://localhost:8801/webhook"
+  },
+  "wabas": [
+    {
+      "id": "200000000000001",
+      "name": "Luigi's Pizza",
+      "subscribed": true,
+      "phone_numbers": [
+        {"id": "300000000000001", "display_phone_number": "+1 555 010 2030", "verified_name": "Luigi's Pizza"}
+      ]
+    }
+  ],
+  "tokens": [{"token": "EAAsalesbotdemotoken", "wabas": "all"}],
+  "contacts": [
+    {"wa_id": "15550001111", "profile_name": "Maya Chen"},
+    {"wa_id": "15550002222", "profile_name": "Daniel Ortiz"},
+    {"wa_id": "15550003333", "profile_name": "Priya Raman"}
+  ],
+  "settings": {"sent_delay_ms": 100, "delivered_delay_ms": 200}
+}

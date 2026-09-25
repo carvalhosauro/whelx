@@ -41,6 +41,47 @@ O whelx roda a Cloud API inteira no seu computador. A sua aplicação não perce
 | Dirigido por agente de código (MCP) | não | não | **sim** |
 | Custo e risco | conversas pagas, número pode ser sinalizado | grátis, mas se distancia da realidade | **grátis e local** |
 
+## Casos de uso
+
+### 1. Seja o cliente
+
+Abra http://localhost:4000 e converse com o seu bot como uma pessoa de verdade faria. Digite, grave um áudio, mande a sua localização, toque em botões e em itens de lista, reaja a mensagens. Cada mensagem tem um inspetor de JSON ao lado dos webhooks exatos que ela gerou, então você depura contra o que a Meta enviaria, não contra o que você acha que ela envia.
+
+### 2. Deixe o seu agente de código ser o cliente
+
+Você acabou de mudar o funil de vendas. Em vez de testar na mão, peça ao seu agente para fazer o papel de clientes pelo servidor MCP do whelx e dizer onde o funil quebra.
+
+<p align="center">
+  <img src="docs/assets/agent-demo.gif" alt="O Claude, pelo MCP do whelx, faz o papel de um cliente que pergunta algo no meio do pedido; o bot reinicia a conversa e perde o carrinho" width="860"/>
+</p>
+
+> Use o MCP do whelx para testar o bot de vendas como três clientes: um que compra uma pizza com bebida, um que faz uma pergunta no meio do pedido e um que desiste no upsell. Espere a resposta do bot depois de cada mensagem e me diga onde o funil quebra.
+
+Uma execução real contra o [bot de vendas de exemplo](examples/sales-bot) (resumida):
+
+```text
+Maya (compra):
+  send_as_contact(text="Hi! I'd like a pizza")   ← list: "What are you craving tonight?" [margherita, pepperoni, four_cheese]
+  reply_interactive(id="pepperoni")              ← buttons: "Add a Coke 2L for R$ 12,00?" [add_drink, no_drink]
+  reply_interactive(id="add_drink")              ← buttons: "Pepperoni + Coke 2L … Place the order?" [place, change]
+  reply_interactive(id="place")                  ← order_details: total R$ 76.00, items: Pepperoni pizza, Coke 2L   ✓
+
+Daniel (pergunta no meio do pedido):
+  … four_cheese → no_drink                       ← buttons: "Four cheese … Place the order?"
+  send_as_contact(text="is delivery free?")      ← text: "Sorry, I didn't get that. Let's start over!"   ✗ carrinho perdido
+
+Priya (desiste no upsell):
+  … margherita                                   ← buttons: "Add a Coke 2L for R$ 12,00?"   (sem follow-up)
+```
+
+> **Claude:** o caminho feliz funciona. O funil quebra quando o cliente digita uma pergunta no meio do pedido: `handle()` trata qualquer texto fora da saudação como desconhecido, zera o carrinho e manda o cardápio de novo, e o Daniel perde a pizza quatro queijos. Responda a pergunta e retome o passo atual. Vale também um lembrete para quem para no upsell, como a Priya.
+
+O agente só usa `send_as_contact`, `reply_interactive` e `wait_for`. Teste você mesmo em dois minutos: [examples/sales-bot](examples/sales-bot).
+
+### 3. Quebre antes que a produção quebre
+
+Rode campanhas em volume e veja o `130429` aparecer acima de 80 msg/s. Feche a janela de 24 h com um clique e confira se a sua aplicação passa a usar templates. Ligue o preset de caos `flaky` ou `hostile` (webhooks perdidos, duplicados e fora de ordem, falhas `131026` e `131049`), ou restrinja a um número só, e prove que os seus retries e a sua idempotência aguentam.
+
 ## O que tem dentro
 
 - **Graph API fake** em `/vNN.N/...`, qualquer versão. Cobre:
