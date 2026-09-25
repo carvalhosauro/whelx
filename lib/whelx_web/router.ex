@@ -25,7 +25,9 @@ defmodule WhelxWeb.Router do
   scope "/", WhelxWeb do
     pipe_through :browser
 
+    live "/", ChatLive, :index
     live "/config", ConfigLive, :index
+    get "/ui/media/:id", UiMediaController, :show
   end
 
   scope "/_whelx", WhelxWeb.Control do
