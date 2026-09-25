@@ -60,6 +60,13 @@ defmodule WhelxWeb.Router do
     post "/wait", WaitController, :create
   end
 
+  scope "/_whelx", WhelxWeb do
+    pipe_through :api
+
+    post "/mcp", McpController, :handle
+    get "/mcp", McpController, :stream
+  end
+
   # Fake Graph API. Must stay last: `/:version/...` would shadow other routes.
   scope "/", WhelxWeb.Graph do
     pipe_through :graph
