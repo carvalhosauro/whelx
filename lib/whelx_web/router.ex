@@ -87,6 +87,7 @@ defmodule WhelxWeb.Router do
     get "/:version/:id", ObjectController, :show
     post "/:version/:id", ObjectController, :create
     get "/:version/:id/phone_numbers", WabaController, :phone_numbers
+    get "/:version/:id/subscribed_apps", WabaController, :subscribed_apps
     post "/:version/:id/subscribed_apps", WabaController, :subscribe
     delete "/:version/:id/subscribed_apps", WabaController, :unsubscribe
     post "/:version/:id/messages", MessageController, :create

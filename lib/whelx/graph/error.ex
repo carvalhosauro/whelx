@@ -38,6 +38,8 @@ defmodule Whelx.Graph.Error do
     2500 => {400, "Unknown path components"},
     130_429 => {400, "(#130429) Rate limit hit"},
     131_000 => {500, "(#131000) Something went wrong"},
+    131_056 => {400, "(#131056) (Business Account, Consumer Account) pair rate limit hit"},
+    2200 => {400, "(#2200) Callback verification failed"},
     132_000 =>
       {400, "(#132000) Number of parameters does not match the expected number of params"},
     132_001 => {404, "(#132001) Template name does not exist in the translation"}

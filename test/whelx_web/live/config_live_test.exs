@@ -30,10 +30,23 @@ defmodule WhelxWeb.ConfigLiveTest do
              Accounts.get_app()
 
     view
-    |> form("#settings-form", settings: %{sent_delay_ms: 50, webhook_retry_profile: "realistic"})
+    |> form("#settings-form",
+      settings: %{
+        sent_delay_ms: 50,
+        webhook_retry_profile: "realistic",
+        pair_rate_limit_enabled: "true",
+        pair_rate_limit_burst: 3
+      }
+    )
     |> render_submit()
 
-    assert %{sent_delay_ms: 50, webhook_retry_profile: "realistic"} = Accounts.get_settings()
+    assert %{
+             sent_delay_ms: 50,
+             webhook_retry_profile: "realistic",
+             pair_rate_limit_enabled: true,
+             pair_rate_limit_burst: 3
+           } =
+             Accounts.get_settings()
   end
 
   test "invalid webhook URL shows an error", %{conn: conn} do

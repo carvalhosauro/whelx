@@ -33,6 +33,7 @@ defmodule WhelxWeb.ChaosLive do
       |> Map.update("async_fail_codes", nil, fn v ->
         v |> split_list() |> Enum.map(&String.to_integer/1)
       end)
+      |> Map.update("phone_number_ids", nil, &split_list/1)
       |> Map.reject(fn {_k, v} -> is_nil(v) end)
       |> Map.put("preset", "custom")
 
@@ -128,6 +129,15 @@ defmodule WhelxWeb.ChaosLive do
                 <input
                   name="chaos[async_fail_codes]"
                   value={Enum.join(@profile.async_fail_codes, ", ")}
+                  class={input_class()}
+                />
+              </label>
+              <label class="md:col-span-3">
+                <span class="mb-1 block text-base-content/70">Só nestes phone_number_ids (vazio = todos)</span>
+                <input
+                  name="chaos[phone_number_ids]"
+                  value={Enum.join(@profile.phone_number_ids || [], ", ")}
+                  placeholder="ex.: 219000000009101"
                   class={input_class()}
                 />
               </label>

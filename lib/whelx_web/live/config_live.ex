@@ -28,7 +28,7 @@ defmodule WhelxWeb.ConfigLive do
       settings_form:
         to_form(
           Map.new(
-            ~w(webhook_retry_profile template_approval_policy template_review_after_ms template_reject_reason sent_delay_ms delivered_delay_ms)a,
+            ~w(webhook_retry_profile template_approval_policy template_review_after_ms template_reject_reason sent_delay_ms delivered_delay_ms pair_rate_limit_enabled pair_rate_limit_burst pair_rate_limit_interval_ms)a,
             &{Atom.to_string(&1), Map.fetch!(settings, &1)}
           ),
           as: :settings
@@ -274,6 +274,32 @@ defmodule WhelxWeb.ConfigLive do
                   class={input_class()}
                 />
               </label>
+              <label>
+                <span class="mb-1 block text-base-content/70">Pair rate limit (131056)</span>
+                <select name="settings[pair_rate_limit_enabled]" class={input_class()}>
+                  {Phoenix.HTML.Form.options_for_select(
+                    [{"Desligado", "false"}, {"Ligado", "true"}],
+                    to_string(@settings_form[:pair_rate_limit_enabled].value)
+                  )}
+                </select>
+              </label>
+              <label>
+                <span class="mb-1 block text-base-content/70">Burst / intervalo (ms)</span>
+                <span class="flex gap-2">
+                  <input
+                    type="number"
+                    name="settings[pair_rate_limit_burst]"
+                    value={@settings_form[:pair_rate_limit_burst].value}
+                    class={input_class()}
+                  />
+                  <input
+                    type="number"
+                    name="settings[pair_rate_limit_interval_ms]"
+                    value={@settings_form[:pair_rate_limit_interval_ms].value}
+                    class={input_class()}
+                  />
+                </span>
+              </label>
               <div class="col-span-2">
                 <.btn type="submit" variant="primary">Salvar</.btn>
               </div>
@@ -317,6 +343,13 @@ defmodule WhelxWeb.ConfigLive do
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold">{waba.name}</span>
                 <span class="font-mono text-xs text-base-content/60">{waba.id}</span>
+                <span
+                  :if={waba.override_callback_uri}
+                  class="font-mono text-xs text-sky-600"
+                  title="override_callback_uri do WABA"
+                >
+                  → {waba.override_callback_uri}
+                </span>
                 <.copy_button text={waba.id} label="" />
                 <button phx-click="toggle_subscribed" phx-value-id={waba.id} class="ml-auto">
                   <.badge color={if waba.subscribed, do: "green", else: "yellow"}>
@@ -338,7 +371,15 @@ defmodule WhelxWeb.ConfigLive do
                     {phone.id} <.copy_button text={phone.id} label="" />
                   </td>
                   <td class="py-1.5">{phone.display_phone_number}</td>
-                  <td class="py-1.5 text-base-content/70">{phone.verified_name}</td>
+                  <td class="py-1.5 text-base-content/70">
+                    {phone.verified_name}
+                    <span
+                      :if={phone.override_callback_uri}
+                      class="block font-mono text-[11px] text-sky-600"
+                    >
+                      → {phone.override_callback_uri}
+                    </span>
+                  </td>
                   <td class="py-1.5 text-xs text-base-content/60">{phone.throughput_mps} msg/s</td>
                   <td class="py-1.5 text-right">
                     <.btn

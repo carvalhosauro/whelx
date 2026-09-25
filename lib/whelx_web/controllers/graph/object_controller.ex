@@ -16,12 +16,16 @@ defmodule WhelxWeb.Graph.ObjectController do
              do: Render.ok(conn, Fields.select(JSON.waba(waba), params["fields"], ~w(id name)))
 
       {:phone_number, phone} ->
-        with :ok <- Authz.waba(token, phone.waba_id),
-             do:
-               Render.ok(
-                 conn,
-                 Fields.select(JSON.phone_number(phone), params["fields"], @phone_fields)
-               )
+        with :ok <- Authz.waba(token, phone.waba_id) do
+          full =
+            Map.put(
+              JSON.phone_number(phone),
+              "webhook_configuration",
+              webhook_configuration(phone)
+            )
+
+          Render.ok(conn, Fields.select(full, params["fields"], @phone_fields))
+        end
 
       {:app, app} ->
         Render.ok(conn, %{"id" => app.id, "name" => app.name})
@@ -50,7 +54,48 @@ defmodule WhelxWeb.Graph.ObjectController do
     ArgumentError -> {:error, Error.invalid_parameter("file_offset inválido")}
   end
 
-  def create(_conn, %{"id" => id}), do: {:error, Error.unknown_object("post", id)}
+  def create(conn, %{"id" => id}) do
+    case ObjectResolver.resolve(id) do
+      {:phone_number, phone} -> update_phone(conn, phone)
+      _ -> {:error, Error.unknown_object("post", id)}
+    end
+  end
+
+  # POST /{phone_number_id} {"webhook_configuration": {...}}: per-number callback override.
+  defp update_phone(conn, phone) do
+    with :ok <- Authz.waba(conn.assigns.access_token, phone.waba_id),
+         {:ok, config} <- webhook_configuration_param(conn.body_params),
+         {:ok, override} <-
+           WhelxWeb.Graph.WabaController.verified_override(
+             config["override_callback_uri"],
+             config["verify_token"]
+           ),
+         {:ok, _} <-
+           Whelx.Accounts.upsert_phone_number(%{
+             "id" => phone.id,
+             "override_callback_uri" => override[:uri],
+             "override_verify_token" => override[:token]
+           }) do
+      Render.ok(conn, %{"success" => true})
+    end
+  end
+
+  defp webhook_configuration_param(%{"webhook_configuration" => %{} = config}), do: {:ok, config}
+
+  defp webhook_configuration_param(_params),
+    do: {:error, Error.unsupported("POST /{phone_number_id} sem webhook_configuration")}
+
+  defp webhook_configuration(phone) do
+    waba = Whelx.Accounts.get_waba(phone.waba_id)
+    app = Whelx.Accounts.get_app()
+
+    %{
+      "phone_number" => phone.override_callback_uri,
+      "whatsapp_business_account" => waba && waba.override_callback_uri,
+      "application" => app && app.webhook_url
+    }
+    |> Map.reject(fn {_k, v} -> v in [nil, ""] end)
+  end
 
   defp raw_body(conn) do
     case conn.assigns[:raw_body] do

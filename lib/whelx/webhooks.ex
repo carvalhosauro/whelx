@@ -21,15 +21,22 @@ defmodule Whelx.Webhooks do
 
     delay = Keyword.get(opts, :delay_ms, 0)
 
-    case skip_reason(waba_id) do
+    case skip_reason(waba_id, payload) do
       nil ->
-        if Keyword.get(opts, :chaos, true),
+        if Keyword.get(opts, :chaos, true) and chaos_in_scope?(payload),
           do: enqueue_with_chaos(base, kind, delay),
           else: insert_pending(base, delay)
 
       reason ->
         insert_final(base, "skipped", reason)
     end
+  end
+
+  defp chaos_in_scope?(payload) do
+    Chaos.applies?(
+      Chaos.get_profile(),
+      get_in(payload, value_path() ++ ["metadata", "phone_number_id"])
+    )
   end
 
   defp enqueue_with_chaos(base, kind, delay) do
@@ -104,21 +111,39 @@ defmodule Whelx.Webhooks do
     |> broadcast()
   end
 
-  defp skip_reason(waba_id) do
-    app = Accounts.get_app()
+  defp skip_reason(waba_id, payload) do
     waba = Accounts.get_waba(waba_id)
 
     cond do
-      is_nil(app) or app.webhook_url in [nil, ""] -> "webhook_url não configurada"
       is_nil(waba) or not waba.subscribed -> "WABA #{waba_id} sem subscribed_apps"
+      is_nil(callback_url(waba_id, payload)) -> "webhook_url não configurada"
       true -> nil
     end
+  end
+
+  @doc """
+  Callback URL with Meta's precedence: phone number override, then WABA
+  override, then the app's webhook URL.
+  """
+  @spec callback_url(String.t(), map()) :: String.t() | nil
+  def callback_url(waba_id, payload) do
+    phone_id = get_in(payload, value_path() ++ ["metadata", "phone_number_id"])
+    phone = phone_id && Accounts.get_phone_number(phone_id)
+    waba = Accounts.get_waba(waba_id)
+    app = Accounts.get_app()
+
+    [
+      phone && phone.override_callback_uri,
+      waba && waba.override_callback_uri,
+      app && app.webhook_url
+    ]
+    |> Enum.find(&(&1 not in [nil, ""]))
   end
 
   @doc "Performs one delivery attempt."
   @spec attempt(Delivery.t(), pos_integer()) :: :ok | {:error, String.t()}
   def attempt(%Delivery{} = delivery, attempt) do
-    case skip_reason(delivery.waba_id) do
+    case skip_reason(delivery.waba_id, delivery.payload) do
       nil -> do_attempt(merge_batch(delivery), attempt)
       reason -> skip(delivery, reason)
     end
@@ -149,7 +174,7 @@ defmodule Whelx.Webhooks do
 
     result =
       try do
-        Client.post(app.webhook_url, body, headers)
+        Client.post(callback_url(delivery.waba_id, delivery.payload), body, headers)
       rescue
         exception -> {:error, exception}
       end
@@ -242,18 +267,24 @@ defmodule Whelx.Webhooks do
   @doc "GET handshake against the webhook URL, like Meta's dashboard does."
   def verify do
     app = Accounts.get_app!()
+
+    if app.webhook_url in [nil, ""],
+      do: {:error, "webhook_url não configurada"},
+      else: verify_url(app.webhook_url, app.verify_token)
+  end
+
+  @doc "hub.challenge handshake against any callback URL (used for overrides too)."
+  def verify_url(url, verify_token) do
     challenge = Ids.alnum(16)
 
-    if app.webhook_url in [nil, ""] do
-      {:error, "webhook_url não configurada"}
-    else
-      params = %{
-        "hub.mode" => "subscribe",
-        "hub.verify_token" => app.verify_token,
-        "hub.challenge" => challenge
-      }
+    params = %{
+      "hub.mode" => "subscribe",
+      "hub.verify_token" => verify_token,
+      "hub.challenge" => challenge
+    }
 
-      case Client.get(app.webhook_url, params) do
+    try do
+      case Client.get(url, params) do
         {:ok, %{status: status, body: body}} ->
           body = to_string(body)
 
@@ -263,6 +294,8 @@ defmodule Whelx.Webhooks do
         {:error, exception} ->
           {:error, Exception.message(exception)}
       end
+    rescue
+      exception -> {:error, Exception.message(exception)}
     end
   end
 

@@ -155,6 +155,7 @@ defmodule Whelx.Messaging do
   """
   def send_outbound(%PhoneNumber{} = phone, %{kind: :message} = request) do
     with :ok <- throughput(phone),
+         :ok <- pair_limit(phone, request.to),
          {:ok, extra} <- prepare(phone, request) do
       contact = Contacts.find_or_create_contact(request.to)
       conversation = get_or_create_conversation(phone.id, contact.wa_id)
@@ -337,11 +338,28 @@ defmodule Whelx.Messaging do
         :ok
 
       {:error, :rate_limited} ->
-        {:error,
-         Error.new(130_429,
-           details:
-             "Message failed to send because there were too many messages sent from this phone number in a short period of time"
-         )}
+        {:error, Error.new(130_429, details: "Cloud API message throughput has been reached.")}
+    end
+  end
+
+  defp pair_limit(phone, wa_id) do
+    settings = Accounts.get_settings()
+
+    with true <- settings.pair_rate_limit_enabled,
+         {:error, :pair_limited} <-
+           Whelx.Messaging.PairLimit.check(
+             phone.id,
+             wa_id,
+             settings.pair_rate_limit_burst,
+             settings.pair_rate_limit_interval_ms
+           ) do
+      {:error,
+       Error.new(131_056,
+         details:
+           "Message failed to send because there were too many messages sent from this phone number to the same phone number in a short period of time."
+       )}
+    else
+      _ -> :ok
     end
   end
 
@@ -367,7 +385,8 @@ defmodule Whelx.Messaging do
       nil ->
         profile = Whelx.Chaos.get_profile()
 
-        if Whelx.Chaos.hit?(profile, :async_fail, profile.async_fail_rate) do
+        if Whelx.Chaos.applies?(profile, conversation.phone_number_id) and
+             Whelx.Chaos.hit?(profile, :async_fail, profile.async_fail_rate) do
           code = Whelx.Chaos.pick(profile, :async_fail_code, profile.async_fail_codes) || 131_000
           {%{"code" => code, "chaos" => true}, "async_fail:#{code}"}
         else

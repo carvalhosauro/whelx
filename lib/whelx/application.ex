@@ -19,6 +19,7 @@ defmodule Whelx.Application do
       {Task.Supervisor, name: Whelx.TaskSupervisor},
       Whelx.Chaos.Counter,
       Whelx.Messaging.Throughput,
+      Whelx.Messaging.PairLimit,
       # Start to serve requests, typically the last entry
       WhelxWeb.Endpoint
     ]

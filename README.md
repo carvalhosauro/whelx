@@ -66,6 +66,33 @@ Snippet para o `docker-compose.yml` da pigz-api:
     volumes: ["whelx-data:/data"]
 ```
 
+### Webhook por WABA ou por número
+
+Como na Meta, a URL de callback segue a precedência **número → WABA → app**:
+
+```bash
+# override no WABA (a whelx verifica o hub.challenge antes de aceitar, erro 2200 se falhar)
+curl -X POST $WHELX/v25.0/$WABA/subscribed_apps -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' -d '{"override_callback_uri":"http://pigz-api/api/webhook/whatsapp","verify_token":"..."}'
+# remover o override do WABA: POST sem corpo
+# override no número
+curl -X POST $WHELX/v25.0/$PHONE -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+  -d '{"webhook_configuration":{"override_callback_uri":"http://...","verify_token":"..."}}'
+# ver as três camadas
+curl "$WHELX/v25.0/$PHONE?fields=webhook_configuration" -H "Authorization: Bearer $TOKEN"
+```
+
+No seed: `wabas[].override_callback_uri` / `override_verify_token` e o mesmo em `phone_numbers[]`. O seed não faz verificação.
+
+### Limites
+
+- **Throughput por número:** `throughput_mps` (padrão 80) retorna HTTP 400 com `130429` e "Cloud API message throughput has been reached.".
+- **Pair rate limit (mesmo número → mesmo cliente):** desligado por padrão. Liga em Config ou com `PUT /_whelx/config {"settings":{"pair_rate_limit_enabled":true}}`. Funciona como token bucket (`pair_rate_limit_burst`, padrão 45; `pair_rate_limit_interval_ms`, padrão 6000, que dá 1 msg a cada 6 s) e retorna HTTP 400 com `131056`. É determinístico, não é caos.
+
+### Templates no seed
+
+No `/_whelx/seed`, um template com `{{n}}` sem `example` recebe um example gerado automaticamente (`"exemplo 1"`, …). A criação pela Graph (`POST /{waba}/message_templates`) continua exigindo `example`, como a Meta.
+
 ## API de controle (`/_whelx`)
 
 | Rota | O que faz |
@@ -74,7 +101,7 @@ Snippet para o `docker-compose.yml` da pigz-api:
 | `POST /reset?keep=contacts,templates` | apaga dados de teste e mantém a configuração |
 | `GET`/`PUT /config` | configuração (app, settings) |
 | `POST /tokens` | gera token `EAA…` |
-| `GET`/`PUT /chaos` | perfil de caos (`{"preset":"flaky"}` ou campos) |
+| `GET`/`PUT /chaos` | perfil de caos (`{"preset":"flaky"}` ou campos). `phone_number_ids: [...]` restringe o caos a esses números (vazio = todos) |
 | `/contacts`, `POST /contacts/bulk` | contatos fake |
 | `POST /contacts/:wa_id/messages` | o contato manda `text`, `location`, `reaction`, `image`/`audio`/`document` (base64) |
 | `POST /contacts/:wa_id/reply-interactive` | clica num botão, linha de lista ou quick reply (`{wamid, id}`) |

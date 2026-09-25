@@ -23,6 +23,7 @@ defmodule Whelx.Control.JSON do
       "id" => w.id,
       "name" => w.name,
       "subscribed" => w.subscribed,
+      "override_callback_uri" => w.override_callback_uri,
       "phone_numbers" => Enum.map(phones, &phone/1)
     }
 
@@ -33,7 +34,8 @@ defmodule Whelx.Control.JSON do
       "display_phone_number" => p.display_phone_number,
       "verified_name" => p.verified_name,
       "quality_rating" => p.quality_rating,
-      "throughput_mps" => p.throughput_mps
+      "throughput_mps" => p.throughput_mps,
+      "override_callback_uri" => p.override_callback_uri
     }
   end
 
@@ -42,7 +44,7 @@ defmodule Whelx.Control.JSON do
 
   def settings(%Settings{} = s) do
     Map.new(
-      ~w(webhook_retry_profile template_approval_policy template_review_after_ms template_reject_reason sent_delay_ms delivered_delay_ms)a,
+      ~w(webhook_retry_profile template_approval_policy template_review_after_ms template_reject_reason sent_delay_ms delivered_delay_ms pair_rate_limit_enabled pair_rate_limit_burst pair_rate_limit_interval_ms)a,
       &{Atom.to_string(&1), Map.fetch!(s, &1)}
     )
   end
@@ -51,6 +53,7 @@ defmodule Whelx.Control.JSON do
     p
     |> Map.from_struct()
     |> Map.drop([:__meta__, :id, :inserted_at, :updated_at])
+    |> Map.update(:phone_number_ids, [], &(&1 || []))
     |> Map.new(fn {k, v} -> {Atom.to_string(k), v} end)
   end
 

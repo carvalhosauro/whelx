@@ -142,6 +142,7 @@ defmodule Whelx.Control do
     Media.prune_orphan_files()
     Chaos.reset_counters()
     Throughput.reset()
+    Whelx.Messaging.PairLimit.reset()
     Events.broadcast("config", :reset)
     :ok
   end

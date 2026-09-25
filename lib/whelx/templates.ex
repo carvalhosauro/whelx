@@ -45,7 +45,7 @@ defmodule Whelx.Templates do
 
   @doc "Upsert used by seeding. Status defaults to APPROVED."
   def seed_template(waba_id, params) do
-    params = Attrs.stringify(params)
+    params = params |> Attrs.stringify() |> Map.update("components", [], &add_examples/1)
 
     with :ok <- Validation.validate_template_definition(params) do
       existing =
@@ -67,6 +67,34 @@ defmodule Whelx.Templates do
       })
       |> Repo.insert_or_update()
       |> broadcast()
+    end
+  end
+
+  # Test fixtures: fill a missing `example` from the {{n}} placeholders so seeds
+  # don't need Graph-grade examples. Graph creation still requires them.
+  defp add_examples(components) when is_list(components) do
+    Enum.map(components, fn component ->
+      case {TemplateDefinition.type_of(component), component["example"]} do
+        {"BODY", nil} ->
+          with_example(component, "body_text", fn values -> [values] end)
+
+        {"HEADER", nil} ->
+          if String.upcase(to_string(component["format"])) == "TEXT",
+            do: with_example(component, "header_text", & &1),
+            else: component
+
+        _ ->
+          component
+      end
+    end)
+  end
+
+  defp add_examples(other), do: other
+
+  defp with_example(component, key, shape) do
+    case variable_count(component["text"]) do
+      0 -> component
+      n -> Map.put(component, "example", %{key => shape.(Enum.map(1..n, &"exemplo #{&1}"))})
     end
   end
 

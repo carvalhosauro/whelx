@@ -11,13 +11,23 @@ defmodule Whelx.Accounts.Waba do
     field :app_id, :string
     field :name, :string
     field :subscribed, :boolean, default: false
+    field :override_callback_uri, :string
+    field :override_verify_token, :string
     timestamps()
   end
 
   def changeset(waba, attrs) do
     waba
-    |> cast(attrs, [:id, :app_id, :name, :subscribed])
+    |> cast(attrs, [
+      :id,
+      :app_id,
+      :name,
+      :subscribed,
+      :override_callback_uri,
+      :override_verify_token
+    ])
     |> put_default(:id, &Ids.numeric_id/0)
     |> validate_required([:id, :app_id, :name])
+    |> validate_http_url(:override_callback_uri)
   end
 end

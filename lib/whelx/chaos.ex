@@ -78,6 +78,15 @@ defmodule Whelx.Chaos do
       Enum.any?(Profile.rates(), &(Map.fetch!(p, &1) > 0))
   end
 
+  @doc "Whether chaos applies to this business number (scope empty = all numbers)."
+  @spec applies?(Profile.t(), String.t() | nil) :: boolean()
+  def applies?(%Profile{phone_number_ids: scope}, phone_id) do
+    case scope do
+      blank when blank in [nil, []] -> true
+      ids -> phone_id in ids
+    end
+  end
+
   @spec roll(Profile.t(), atom()) :: float()
   def roll(%Profile{seed: seed}, point) do
     n = Counter.next(point)

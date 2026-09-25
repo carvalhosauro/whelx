@@ -27,6 +27,8 @@ defmodule Whelx.Chaos.Profile do
     field :drop_rate, :float, default: 0.0
     field :batch_rate, :float, default: 0.0
     field :webhook_extra_delay_ms, :integer, default: 0
+    # Empty = every number. Otherwise chaos only touches these phone_number_ids.
+    field :phone_number_ids, {:array, :string}, default: []
     timestamps()
   end
 
@@ -42,7 +44,8 @@ defmodule Whelx.Chaos.Profile do
       :latency_max_ms,
       :sync_error_codes,
       :async_fail_codes,
-      :webhook_extra_delay_ms | @rates
+      :webhook_extra_delay_ms,
+      :phone_number_ids | @rates
     ])
     |> validate_required([:seed, :preset])
     |> validate_number(:latency_min_ms, greater_than_or_equal_to: 0)

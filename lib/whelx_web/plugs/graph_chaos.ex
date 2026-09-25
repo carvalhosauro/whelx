@@ -11,7 +11,7 @@ defmodule WhelxWeb.Plugs.GraphChaos do
   @impl true
   def call(conn, _opts) do
     profile = Chaos.get_profile()
-    if Chaos.active?(profile), do: inject(conn, profile), else: conn
+    if Chaos.active?(profile) and in_scope?(profile, conn), do: inject(conn, profile), else: conn
   end
 
   defp inject(conn, profile) do
@@ -31,6 +31,16 @@ defmodule WhelxWeb.Plugs.GraphChaos do
       conn
     end
   end
+
+  # Scoped chaos: the path object must be a scoped number, or a WABA that owns one.
+  defp in_scope?(%{phone_number_ids: blank}, _conn) when blank in [nil, []], do: true
+
+  defp in_scope?(profile, %Plug.Conn{path_params: %{"id" => id}}) do
+    Chaos.applies?(profile, id) or
+      Enum.any?(Whelx.Accounts.list_phone_numbers(id), &Chaos.applies?(profile, &1.id))
+  end
+
+  defp in_scope?(_profile, _conn), do: false
 
   defp messages_route?(conn),
     do: conn.method == "POST" and List.last(conn.path_info) == "messages"

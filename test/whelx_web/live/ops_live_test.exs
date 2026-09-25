@@ -86,7 +86,10 @@ defmodule WhelxWeb.OpsLiveTest do
     view |> element(~s(button[phx-click="preset"][phx-value-name="flaky"])) |> render_click()
     assert Chaos.get_profile().preset == "flaky"
 
-    view |> form("#chaos-form", chaos: %{drop_rate: "0.25", seed: "7"}) |> render_submit()
-    assert %{drop_rate: 0.25, seed: 7} = Chaos.get_profile()
+    view
+    |> form("#chaos-form", chaos: %{drop_rate: "0.25", seed: "7", phone_number_ids: "111, 222"})
+    |> render_submit()
+
+    assert %{drop_rate: 0.25, seed: 7, phone_number_ids: ["111", "222"]} = Chaos.get_profile()
   end
 end
