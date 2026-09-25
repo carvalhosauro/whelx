@@ -159,6 +159,7 @@ defmodule Whelx.Messaging do
       contact = Contacts.find_or_create_contact(request.to)
       conversation = get_or_create_conversation(phone.id, contact.wa_id)
       now = DateTime.utc_now()
+      {failure, chaos_tag} = decide_failure(request, contact, conversation)
 
       {:ok, message} =
         Repo.transaction(fn ->
@@ -174,7 +175,8 @@ defmodule Whelx.Messaging do
                 |> Map.put("pricing", pricing(extra["category"], window_open?(conversation))),
               status: "accepted",
               context_wamid: request.context_wamid,
-              planned_failure: planned_failure(request, contact, conversation)
+              planned_failure: failure,
+              chaos_tag: chaos_tag
             })
 
           from(c in Conversation, where: c.id == ^conversation.id)
@@ -359,6 +361,23 @@ defmodule Whelx.Messaging do
   end
 
   defp prepare(_phone, _request), do: {:ok, %{"category" => "service"}}
+
+  defp decide_failure(request, contact, conversation) do
+    case planned_failure(request, contact, conversation) do
+      nil ->
+        profile = Whelx.Chaos.get_profile()
+
+        if Whelx.Chaos.hit?(profile, :async_fail, profile.async_fail_rate) do
+          code = Whelx.Chaos.pick(profile, :async_fail_code, profile.async_fail_codes) || 131_000
+          {%{"code" => code, "chaos" => true}, "async_fail:#{code}"}
+        else
+          {nil, nil}
+        end
+
+      failure ->
+        {failure, nil}
+    end
+  end
 
   defp planned_failure(request, contact, conversation) do
     cond do

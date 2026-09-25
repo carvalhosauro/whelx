@@ -3,7 +3,7 @@ defmodule Whelx.Webhooks do
 
   import Ecto.Query
   alias Ecto.Multi
-  alias Whelx.{Accounts, Events, Ids, Logs, Repo}
+  alias Whelx.{Accounts, Chaos, Events, Ids, Logs, Repo}
   alias Whelx.Webhooks.{Client, Delivery, DeliveryWorker, Signer}
 
   @max_attempts 9
@@ -19,11 +19,63 @@ defmodule Whelx.Webhooks do
   def enqueue(waba_id, kind, payload, opts \\ []) do
     base = %{waba_id: waba_id, kind: kind, payload: payload, message_wamid: opts[:message_wamid]}
 
+    delay = Keyword.get(opts, :delay_ms, 0)
+
     case skip_reason(waba_id) do
-      nil -> insert_pending(base, Keyword.get(opts, :delay_ms, 0))
-      reason -> insert_final(base, "skipped", reason)
+      nil ->
+        if Keyword.get(opts, :chaos, true),
+          do: enqueue_with_chaos(base, kind, delay),
+          else: insert_pending(base, delay)
+
+      reason ->
+        insert_final(base, "skipped", reason)
     end
   end
+
+  defp enqueue_with_chaos(base, kind, delay) do
+    profile = Chaos.get_profile()
+
+    cond do
+      not Chaos.active?(profile) ->
+        insert_pending(base, delay)
+
+      Chaos.hit?(profile, :webhook_drop, profile.drop_rate) ->
+        insert_final(Map.put(base, :chaos_tag, "drop"), "dropped", "chaos: evento descartado")
+
+      true ->
+        delay = delay + extra_delay(profile)
+        {base, delay} = maybe_reorder(profile, kind, base, delay)
+        {base, delay} = maybe_batch(profile, kind, base, delay)
+        result = insert_pending(base, delay)
+
+        if Chaos.hit?(profile, :webhook_duplicate, profile.duplicate_rate) do
+          insert_pending(Map.merge(base, %{chaos_tag: "duplicate", batch: false}), delay + 200)
+        end
+
+        result
+    end
+  end
+
+  defp extra_delay(%{webhook_extra_delay_ms: 0}), do: 0
+
+  defp extra_delay(profile),
+    do: trunc(Chaos.roll(profile, :webhook_delay) * profile.webhook_extra_delay_ms)
+
+  defp maybe_reorder(profile, "statuses", base, delay) do
+    if Chaos.hit?(profile, :webhook_reorder, profile.reorder_rate),
+      do: {Map.put(base, :chaos_tag, "reorder"), delay + 2_000 + profile.webhook_extra_delay_ms},
+      else: {base, delay}
+  end
+
+  defp maybe_reorder(_profile, _kind, base, delay), do: {base, delay}
+
+  defp maybe_batch(profile, "statuses", base, delay) do
+    if Chaos.hit?(profile, :webhook_batch, profile.batch_rate),
+      do: {Map.put(base, :batch, true), delay + 1_000},
+      else: {base, delay}
+  end
+
+  defp maybe_batch(_profile, _kind, base, delay), do: {base, delay}
 
   @doc false
   def insert_pending(attrs, delay_ms) do
@@ -66,6 +118,7 @@ defmodule Whelx.Webhooks do
   @doc "Performs one delivery attempt."
   @spec attempt(Delivery.t(), pos_integer()) :: :ok | {:error, String.t()}
   def attempt(%Delivery{} = delivery, attempt) do
+    delivery = merge_batch(delivery)
     app = Accounts.get_app!()
     body = Jason.encode!(delivery.payload)
     signature = Signer.sign(body, app.app_secret)
@@ -103,6 +156,45 @@ defmodule Whelx.Webhooks do
 
     if state == "delivered", do: :ok, else: {:error, error}
   end
+
+  # Chaos "batch": folds other pending batchable statuses of the same number into this POST.
+  defp merge_batch(%Delivery{batch: true, attempts: 0, kind: "statuses"} = delivery) do
+    phone_id = phone_of(delivery)
+
+    others =
+      Repo.all(
+        from d in Delivery,
+          where:
+            d.batch == true and d.state == "pending" and d.kind == "statuses" and
+              d.waba_id == ^delivery.waba_id and d.id != ^delivery.id,
+          order_by: d.id
+      )
+      |> Enum.filter(&(phone_of(&1) == phone_id))
+
+    if others == [] do
+      delivery
+    else
+      statuses = Enum.flat_map([delivery | others], &statuses_of/1)
+      payload = put_in(delivery.payload, value_path() ++ ["statuses"], statuses)
+
+      Repo.update_all(from(d in Delivery, where: d.id in ^Enum.map(others, & &1.id)),
+        set: [state: "merged", merged_into_id: delivery.id]
+      )
+
+      delivery
+      |> Ecto.Changeset.change(payload: payload, chaos_tag: "batch:#{length(statuses)}")
+      |> Repo.update!()
+    end
+  end
+
+  defp merge_batch(delivery), do: delivery
+
+  defp statuses_of(delivery), do: get_in(delivery.payload, value_path() ++ ["statuses"]) || []
+
+  defp phone_of(delivery),
+    do: get_in(delivery.payload, value_path() ++ ["metadata", "phone_number_id"])
+
+  defp value_path, do: ["entry", Access.at(0), "changes", Access.at(0), "value"]
 
   defp failure_state(attempt) when attempt >= @max_attempts, do: "failed"
   defp failure_state(_attempt), do: "retrying"

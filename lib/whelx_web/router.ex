@@ -19,6 +19,7 @@ defmodule WhelxWeb.Router do
     plug WhelxWeb.Plugs.GraphRequestLogger
     plug WhelxWeb.Plugs.GraphVersion
     plug WhelxWeb.Plugs.GraphAuth
+    plug WhelxWeb.Plugs.GraphChaos
   end
 
   scope "/", WhelxWeb do

@@ -28,6 +28,7 @@ defmodule WhelxWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import WhelxWeb.ConnCase
+      use Oban.Testing, repo: Whelx.Repo, engine: Oban.Engines.Lite
     end
   end
 
