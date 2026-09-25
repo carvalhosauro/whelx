@@ -4,6 +4,7 @@ defmodule Whelx.Application do
   @moduledoc false
 
   use Application
+  require Logger
 
   @impl true
   def start(_type, _args) do
@@ -22,7 +23,24 @@ defmodule Whelx.Application do
     # See https://elixir.hexdocs.pm/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Whelx.Supervisor]
-    Supervisor.start_link(children, opts)
+
+    with {:ok, pid} <- Supervisor.start_link(children, opts) do
+      maybe_bootstrap()
+      {:ok, pid}
+    end
+  end
+
+  defp maybe_bootstrap do
+    if Application.get_env(:whelx, :bootstrap, false) do
+      try do
+        Whelx.Accounts.bootstrap!()
+      rescue
+        error ->
+          Logger.warning(
+            "whelx bootstrap skipped: #{Exception.message(error)} (run mix ecto.migrate)"
+          )
+      end
+    end
   end
 
   # Tell Phoenix to update the endpoint configuration
