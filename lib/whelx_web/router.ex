@@ -26,6 +26,8 @@ defmodule WhelxWeb.Router do
     pipe_through :browser
 
     live "/", ChatLive, :index
+    live "/contacts", ContactsLive, :index
+    live "/templates", TemplatesLive, :index
     live "/config", ConfigLive, :index
     get "/ui/media/:id", UiMediaController, :show
   end
